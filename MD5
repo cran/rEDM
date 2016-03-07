@@ -1,4 +1,4 @@
-d62005fdb0b89883d22faf877e48d962 *DESCRIPTION
+d1ea5b839bb4e1effdf25d971a6b158d *DESCRIPTION
 c05db3c9a775209961a92aa312a7d032 *LICENSE
 f77a16daadc9f1cca6e1ad69c23219bd *NAMESPACE
 958f0fd237ffa423b3a05f013d7e0918 *R/RcppExports.R
@@ -20,7 +20,7 @@ f99bb0f08f39fb91542c7070a31c8e95 *data/thrips_block.rda
 39497d97d3ad3282a7a7dc4eaddde893 *data/two_species_model.rda
 e75ec55168c47830c24c068afe4cf3d7 *inst/doc/rEDM_tutorial.R
 2bf3b148a04588b44150c4d2c251af2b *inst/doc/rEDM_tutorial.Rmd
-868f485942fafb9e13ff8b15324c2fd8 *inst/doc/rEDM_tutorial.html
+aacc369c65c3006dce263e4148ab6123 *inst/doc/rEDM_tutorial.html
 fa5316eb01fca98c95b06f387528371c *inst/include/Eigen/Array
 8356f203720db32a51ace30ea0c5222a *inst/include/Eigen/CMakeLists.txt
 cab478a04db5276e45971c6a605db842 *inst/include/Eigen/Cholesky
@@ -375,7 +375,7 @@ b3baab1a8ec6c36ff77cd59fa94030e0 *src/RcppExports.cpp
 b49d441666b9d317ae707c47c32fbf2d *src/block_lnlp.cpp
 5220c6864315a043c716a179a01e4abd *src/block_lnlp.h
 90a04774db89373a4be62c1230eb3c87 *src/data_types.h
-b5cebc0104cb5a68fdcc49832e5da1d2 *src/forecast_machine.cpp
+1b817bf17fcf6e94aaf2ef0b7432fcc4 *src/forecast_machine.cpp
 b8ff9e6543644be6dc5ba05c1ce09a76 *src/forecast_machine.h
 6a81a5ce84b18b9c8578d3c335bcd5d8 *src/lnlp.cpp
 e876dd36dee4641f1f4a47fe8b48a530 *src/lnlp.h
