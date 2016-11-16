@@ -1,6 +1,6 @@
-0e0888bd62940cc240152819d7ebaedc *DESCRIPTION
-c05db3c9a775209961a92aa312a7d032 *LICENSE
-2701092320d380fa1829a5b839173749 *NAMESPACE
+42c9de14e038e54c1cd02b0c39eb6122 *DESCRIPTION
+3fd0badf6690b5d3b519e700cbfce4ec *LICENSE
+f612798f9c21c4c494588365e672b740 *NAMESPACE
 a8ca8e09a44f432b57c75ccea6bc05f6 *R/RcppExports.R
 66d1cdb94cda6bbf7b727e6d4de450d9 *R/block_lnlp_interface.R
 c31abff64a4906b3058fb45d02d85288 *R/ccm_interface.R
@@ -8,8 +8,8 @@ c31abff64a4906b3058fb45d02d85288 *R/ccm_interface.R
 a88bb38cefff8b46d7ecbcedd04740ab *R/lnlp_interface.R
 839440342ec8e5c5797bd9ae52d75a41 *R/multiview_interface.R
 a753305d13f849f4bbcce72d812041ad *R/rEDM_package.R
-ecfe75664f68159d1b543d0cff93503e *R/zzz.R
-fd95b1c8254bfa8b3fdcd62927f6bc98 *build/vignette.rds
+ce64f0811e035421c231b9e63a9a68f6 *R/zzz.R
+1bbac8a35af3bb0048ab87a7e62aff64 *build/vignette.rds
 ba29bf95222fba2f4256f6bcccbcdf5c *data/block_3sp.rda
 b4dfee569d7341dbe5e24c381d8cd1bf *data/e054_succession.rda
 8b5ae45149adf50a3d2db31bd0366ab2 *data/e120_biodiversity.rda
@@ -20,8 +20,8 @@ f43e8ed9cdec0b940d73cc99ed4d350f *data/tentmap_del.rda
 f99bb0f08f39fb91542c7070a31c8e95 *data/thrips_block.rda
 39497d97d3ad3282a7a7dc4eaddde893 *data/two_species_model.rda
 e75ec55168c47830c24c068afe4cf3d7 *inst/doc/rEDM_tutorial.R
-2bf3b148a04588b44150c4d2c251af2b *inst/doc/rEDM_tutorial.Rmd
-6fb1e2ac478b0d890cad450730cacf9c *inst/doc/rEDM_tutorial.html
+e5d44cb0c8e9ab7a8b8118e5282f66bf *inst/doc/rEDM_tutorial.Rmd
+daa4e432eb6d2586ebcd820360cbd4da *inst/doc/rEDM_tutorial.html
 ac420b7ef44425376bc853c3e1218808 *inst/tests/Rplots.pdf
 304f9a544f38c9bd9ceff28376fa3a93 *inst/tests/test_block_lnlp.R
 32b3b2dfb1c518eab8712cf61f68e457 *inst/tests/test_ccm.R
@@ -61,4 +61,4 @@ d15c5ace17d9a4e378775d8cb617c169 *src/lnlp.h
 bc1ff36888e79b75550afd8726fa5048 *vignettes/figure_2.pdf
 84a5d17230616214602da4713c8ea302 *vignettes/figure_3.png
 aa1b87710ee48b8db72ca2f55336c737 *vignettes/rEDM_refs.bib
-2bf3b148a04588b44150c4d2c251af2b *vignettes/rEDM_tutorial.Rmd
+e5d44cb0c8e9ab7a8b8118e5282f66bf *vignettes/rEDM_tutorial.Rmd
