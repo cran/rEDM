@@ -6,11 +6,11 @@
 \usage{
 block_lnlp(block, lib = c(1, NROW(block)), pred = lib,
   norm_type = c("L2 norm", "L1 norm", "P norm"), P = 0.5,
-  method = c("simplex", "s-map"), tp = 1, num_neighbors = "e+1",
+  method = c("simplex", "s-map"), tp = 1,
+  num_neighbors = switch(match.arg(method), simplex = "e+1", `s-map` = 0),
   columns = NULL, target_column = 1, stats_only = TRUE,
   first_column_time = FALSE, exclusion_radius = NULL, epsilon = NULL,
-  theta = NULL, silent = FALSE, save_smap_coefficients = FALSE,
-  short_output = FALSE)
+  theta = NULL, silent = FALSE, save_smap_coefficients = FALSE)
 }
 \arguments{
 \item{block}{either a vector to be used as the time series, or a 
@@ -30,7 +30,8 @@ series to forecast.}
 
 \item{tp}{the prediction horizon (how far ahead to forecast)}
 
-\item{num_neighbors}{the number of nearest neighbors to use (any of "e+1", 
+\item{num_neighbors}{the number of nearest neighbors to use. Note that the 
+default value will change depending on the method selected. (any of "e+1", 
 "E+1", "e + 1", "E + 1" will peg this parameter to E+1 for each run, any
 value < 1 will use all possible neighbors.)}
 
@@ -59,15 +60,11 @@ method == "s-map")}
 \item{silent}{prevents warning messages from being printed to the R console}
 
 \item{save_smap_coefficients}{specifies whether to include the s_map 
-coefficients with the output (and forces the full output as if stats_only 
-were set to FALSE)}
-
-\item{short_output}{specifies whether to return a truncated output data.frame
-whose rows only include the predictions made and not the whole input block}
+coefficients with the output (and forces stats_only = FALSE, as well)}
 }
 \value{
-If stats_only, then a data.frame with components for the parameters 
-  and forecast statistics:
+A data.frame with components for the parameters and forecast 
+  statistics:
 \tabular{ll}{
   cols \tab embedding\cr
   tp \tab prediction horizon\cr
@@ -85,15 +82,14 @@ If stats_only, then a data.frame with components for the parameters
   const_perc \tab same as perc, but for the constant predictor\cr
   const_p_val \tab same as p_val, but for the constant predictor
 }
-Otherwise, a list where the number of elements is equal to the number of runs 
-  (unique parameter combinations). Each element is a list with the following 
-  components:
+If \code{stats_only == FALSE}, then additionally a list column:
 \tabular{ll}{
-  params \tab data.frame of parameters (embedding, tp, nn)\cr
-  
   model_output \tab data.frame with columns for the time index, observations, 
     and predictions\cr
-  stats \tab data.frame of forecast statistics\cr
+}
+If \code{save_smap_coefficients == TRUE} and "s-map" is the method, then another list column:
+\tabular{ll}{
+  smap_coefficients \tab data.frame with columns for the coefficients of the s-map\cr
 }
 }
 \description{
@@ -107,11 +103,11 @@ series can be used as different dimensions of an attractor reconstruction.
 The default parameters are set so that passing a vector as the only 
 argument will use that vector to predict itself one time step ahead. If a 
 matrix or data.frame is given as the only argument, the first column will be 
-predicted, using the remaining columns as the embedding. Rownames will be 
-converted to numeric if possible to be used as the time index, otherwise 
-1:NROW will be used instead. The default lib and pred are for leave-one-out 
-cross-validation over the whole time series, and returning just the forecast 
-statistics.
+predicted (one time step ahead), using the remaining columns as the embedding. 
+Rownames will be converted to numeric if possible to be used as the time 
+index, otherwise 1:NROW will be used instead. The default lib and pred are 
+for leave-one-out cross-validation over the whole time series, and returning 
+just the forecast statistics.
 
 norm_type "L2 norm" (default) uses the typical Euclidean distance:
 \deqn{distance(a,b) := \sqrt{\sum_i{(a_i - b_i)^2}}}{distance(a, b) := \sqrt(\sum(a_i - b_i)^2)}
@@ -129,4 +125,3 @@ data("two_species_model")
 block <- two_species_model[1:200,]
 block_lnlp(block, columns = c("x", "y"), first_column_time = TRUE)
 }
-
