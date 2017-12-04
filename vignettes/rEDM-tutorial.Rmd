@@ -18,11 +18,12 @@ bibliography: refs.bib
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
 ```
+
 # Abstract
 Empirical dynamic modeling (EDM) is an emerging non-parametric framework for modeling nonlinear dynamic systems. EDM is based on the mathematical theory of recontructing attractor manifolds from time series data [@Takens_1981]. The **rEDM** package collects several EDM methods, including simplex projection [@Sugihara_1990], S-map [@Sugihara_1994], multivariate embeddings [@Dixon_1999], convergent cross mapping [@Sugihara_2012], and multiview embedding [@Ye_2016]. Here, we introduce the basic underlying theory, and describe the functionality of the **rEDM**, using examples from both model simulations and real data.
 
 # Introduction
-Many scientific fields use modesl as approximations of reality and for various purposes (e.g. testing hypotheses regarding mechanisms or processes, explaining past observations, predicting future outcomes). In most cases these models are based on hypothesized parametric equations; however explicit equations can be impractical when the exact mechanisms are unknown or too complex to be characterized with existing datasets. Empirical models, that infer patterns and associations from the data (instead of using hypothesized equations), represent an alternative and highly flexible approach. Here, we review the theoretical background for the emerging framework of empirical dynamic modeling (EDM) and the functionality of the **rEDM** package, which are intended for the study nonlinear dynamic systems that can prove problematic for traditional modeling approaches.
+Many scientific fields use modesl as approximations of reality and for various purposes (e.g. testing hypotheses regarding mechanisms or processes, explaining past observations, predicting future outcomes). In most cases these models are based on hypothesized parametric equations; however explicit equations can be impractical when the exact mechanisms are unknown or too complex to be characterized with existing datasets. Empirical models, which infer patterns and associations from the data (instead of using hypothesized equations), represent an alternative and highly flexible approach. Here, we review the theoretical background for empirical dynamic modeling (EDM) and the functionality of the **rEDM** package, which are intended for nonlinear dynamic systems that can prove problematic for traditional modeling approaches.
 
 The basic goal underlying EDM is to reconstruct the behavior of dynamic systems using time series data. This approach is based on mathematical theory developed initially by [@Takens_1981], and expanded on by others [@Sauer_1991; @Casdagli_1991; @Deyle_2011]. Because these methods operate with minimal assumptions, they are particularly suitable for studying systems that exhibit non-equilibrium dynamics and nonlinear state-dependent behavior (i.e. where interactions change over time and as a function of the system state).
 
@@ -46,28 +47,34 @@ devtools::install_github("ha0ye/rEDM")
 
 The essential concept is that time series can be viewed as projections of the behavior of a dynamic system. Here, only a few modest assumptions are required. First, that the system state can be described as a point in a high-dimensional space. The axes of this space can be thought of as fundamental state variables; in an ecosystem, these variables might correspond to population abundances, resources, or environmental conditions. Second, that the system state changes through time following a set of deterministic rules. In other words, the behavior of the system is not completely stochastic.
 
-Consequently, it is possible to project the system state onto one of the coordinate axes to obtain the value of the corresponding state variable. Thus, sequential projections over time will form a time series for that variable. For example, in Figure \ref{fig_time_series_projection}, the states of the canonical Lorenz Attractor [@Lorenz_1963] are projected to the $x$-axis, creating a time series for variable $x$.
+Consequently, it is possible to project the system state onto one of the coordinate axes and obtain the value of the corresponding state variable. Sequential projections over time will thus form a time series for that variable. For example, in Figure \ref{fig_time_series_projection}, the states of the canonical Lorenz Attractor [@Lorenz_1963] are projected to the $x$-axis, creating a time series of variable $x$.
 
-![Time Series Projection from Lorenz Attractor](figure_1.svg)
+```{r fig_time_series_projection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor"}
+knitr::include_graphics("figure_1.svg")
+```
 
-Although different time series observed from the system can represent different state variables, in general, each time series is a function of the system state and may potentially convolve several different state variables.
+In simple cases, different time series from the same system will represent different state variables. However, more generally, each time series is an *observation function* of the system state, and can convolve several different state variables.
 
 ## Attractor Reconstruction / Takens' Theorem
 
-The goal of EDM is to reconstruct the system dynamics from time series data. As seen above, a time series can be thought of as sequential projections of the motion on an attractor; in other words, information about the behavior is encoded in the temporal ordering of the time series. Takens' Theorem [@Takens_1981] states that mathematically valid and equivalent reconstructions of the attractor can be created using lags of just a single time series, by substituting those lags for unknown or unobserved variables. In other words, instead of representing the system state using a complete set of state variables, we can instead use a lagged-coordinate embedding:
+The goal of EDM is to reconstruct the system dynamics from time series data. Because time series are sequential projections of the motion, information about the rules governing system behavior is encoded in both the values and the ordering of time series. Takens' Theorem [@Takens_1981] provides a way to recover this information using just a single time series. Although the system behavior is nominally governed by a high-dimensional state space, we can substitute lags of a time series for the unknown or unobserved variables. For example, instead of representing the system state of the Lorenz Attractor using $x$, $y$, and $z$, we can instead use a delay-coordinate embedding of just $x$:
 $$ \vec{x}_t = \langle x_t, x_{t-\tau}, \dots, x_{t-(E-1)\tau} \rangle $$
 
-![Attractor Reconstruction](figure_2.svg)
+```{r fig_attractor_reconstruction, echo = FALSE, fig.cap = "Attractor Reconstruction from Lagged Coordinates"}
+knitr::include_graphics("figure_2.svg")
+```
 
-If sufficient lags are used, the reconstruction preserves essential mathematical properties of the original system: reconstructed states will map one-to-one to actual system states, and nearby points in the reconstruction will correspond to similar system states. Figure \ref{fig_attractor_reconstruction} shows a reconstruction of the Lorenz attractor (from Figure \ref{fig_time_series_projection}) where the reconstructed system state is comprised of 3 lags of variable $x$. Here, the visual similarity between the reconstruction and the original Lorenz Attractor is quite clear.
+If sufficient lags are used, the reconstruction preserves essential mathematical properties of the original system: reconstructed states will map one-to-one to actual system states, and nearby points in the reconstruction will correspond to similar system states. Figure \ref{fig_attractor_reconstruction} shows a reconstruction of the Lorenz attractor (from Figure \ref{fig_time_series_projection}) where the reconstructed system state is comprised of 3 lags of variable $x$. The correspondence between the reconstruction and the original Lorenz Attractor is clear.
 
-As a consequence of the fact that these mathematical properties of the original system can be recovered from a single time series, there are multiple applications. For example, empirical models can be used for forecasting [@Sugihara_1990], to understand nonlinear behavior [@Sugihara_1994], or to uncover mechanism [@Dixon_1999]. Moreover, recent work describes how EDM can be used to identify causal interactions, by testing whether two time series are observed from the same system [@Sugihara_2012]. In the next section, we demonstrate how the **rEDM** software package can be used to accomplish these various tasks.
+There are many applications for using this approach to recover system dynamics from time series. For example, empirical models can be used for forecasting [@Sugihara_1990], to understand nonlinear behavior [@Sugihara_1994], or to uncover mechanism [@Dixon_1999]. Moreover, recent work describes how EDM can be used to identify causal interactions, by testing whether two time series are observed from the same system [@Sugihara_2012]. In the next section, we demonstrate how the **rEDM** software package can be used to accomplish these tasks.
 
 # Demonstration of EDM
 
 ## Nearest Neighbor Forecasting using Simplex Projection
 
-As mentioned previously, the reconstruction will map one-to-one to the original attractor manifold if enough lags are used (i.e. if the reconstruction has a sufficiently large embedding dimension). If the embedding dimension is too small, then reconstructed states will overlap and appear to be the same even though they actually correspond to different states. These "singularities" will result in poor forecast performance, because the system behavior cannot be uniquely determined in the reconstruction. Thus, we can use prediction skill as an indicator for identifying the optimal embedding dimension. In the following example, we demonstrate how this can be accomplished using a nearest neighbor forecastaing method, Simplex Projection [@Sugihara_1990], implemented in **rEDM** as the function `simplex`.
+As mentioned previously, the reconstruction will map one-to-one to the original attractor manifold if enough lags are used (i.e. if the reconstruction has a sufficiently large embedding dimension). If the embedding dimension is too small, then reconstructed states may overlap and appear to be the same even though they actually correspond to different *true* states of the system. These "singularities" will result in poor forecast performance, because the system behavior cannot be uniquely determined everywhere. Thus, we can use prediction skill as an indicator for the optimal embedding dimension.
+
+In the following example, we demonstrate how this can be accomplished using a nearest neighbor forecasting method, Simplex Projection [@Sugihara_1990], to produce forecasts, and using the correlation between observed and predicted values as the measure of prediction skill.
 
 ### Example
 
@@ -96,11 +103,11 @@ lib <- c(1, 100)
 pred <- c(201, 500)
 ```
 
-We begin by initializing the `lib` and `pred` variables. These determine which portions of the data will be used to create the reconstruction, and which portions of the data the reconstruction will be used to make forecasts on. In other words, defining the "training" and "test" subsets of the data. Here, the first 100 points (rows 1 to 100) in the time series constitute the "library", and 300 points (rows 201 to 500) are the "prediction set" for which the model will produce forecasts.
+We begin by initializing the `lib` and `pred` variables. These determine which portions of the data will be used to create the reconstruction, and which portions will be used to make forecasts on. In other words, defining the "training" and "test" subsets of the data. Here, the first 100 points (rows 1 to 100) in the time series constitute the "library", and 300 points (rows 201 to 500) are the "prediction set" over which the model will produce forecasts.
 
 The remaining parameters will be left at their default values (see section \ref{sec_general_parameters} for details). For the `simplex` function, this means that the embedding dimension, $E$, will range from $1$ to $10$.
 
-*Note that if the code detects any overlap in the lib and pred, it will enable leave-one-out cross-validation and return a warning message.*
+*Note that if the code detects any overlap in the lib and pred, it will enable leave-one-out cross-validation and produce a warning message.*
 
 ```{r simplex on tentmap}
 simplex_output <- simplex(ts, lib, pred)
@@ -240,7 +247,7 @@ One of the corollaries to the Generalized Takens' Theorem is that it should be p
 
 In the case of unidirectional causality, e.g. $x$ causes $y$, the causal variable ($x$) leaves a signature on the affected variable ($y$). Consequently, the reconstructed states based on $y$ can be used to cross predict the values of $x$ (because the reconstruction based on $y$ must be complete, it must include information about the value of $x$). Note that this cross prediction is in the *opposite* direction of the causal effect. At the same time, cross prediction from $x$ to $y$ will fail, because the time series of $x$ behaves independently of $y$, so a univariate reconstruction using only lags of $x$ is necessarily incomplete.
 
-Although $x$ has incomplete information for predicting $y$, it does affect the values of $y$, and therefore will likely to have nonzero predictive skill. However, this cross mapping will be limited to the statistical association between $x$ and $y$ and will generally not improve as longer time series are used for reconstruction. In contrast, the cross prediction of $x$ from $y$ will generally improve. This convergence is therefore a crucial property for inferring causality. For practical reasons, the sensitivity of detecting causality this way is improved if, instead of predicting the future value of another variable, we estimate the concurrent value of another variable. We refer to this modified method as cross mapping, because we are not ``predicting'' the future.
+Although $x$ has incomplete information for predicting $y$, it does affect the values of $y$, and therefore will likely to have nonzero predictive skill. However, this cross mapping will be limited to the statistical association between $x$ and $y$ and will generally not improve as longer time series are used for reconstruction. In contrast, the cross prediction of $x$ from $y$ will generally improve. This convergence is therefore a crucial property for inferring causality. For practical reasons, the sensitivity of detecting causality this way is improved if, instead of predicting the future value of another variable, we estimate the concurrent value of another variable. We refer to this modified method as cross mapping, because we are projecting from one state to another without necessarily "predicting" the future.
 
 For a more detailed description of using cross mapping to infer causation, see [@Sugihara_2012].
 
@@ -269,7 +276,7 @@ The output from CCM is a data.frame with statistics for each model run (in this 
 a_xmap_t_means <- ccm_means(anchovy_xmap_sst)
 t_xmap_a_means <- ccm_means(sst_xmap_anchovy)
 
-par(mar = c(4, 4, 1, 1), mgp = c(2.5, 1, 0)) # set up margins for plotting
+par(mar = c(4, 4, 1, 1), mgp = c(2.5, 1, 0))
 y1 <- pmax(0, a_xmap_t_means$rho)
 y2 <- pmax(0, t_xmap_a_means$rho)
 
@@ -335,16 +342,16 @@ precip_ts <- precip_ts[order(precip_ts$Year), ]
 
 We can then use the **rEDM** functions as normal for each of our time series. First, we apply simplex projection:
 
-```{r simplex on e120, tidy = TRUE, cache = TRUE, warning = FALSE, fig.width = 6}
+```{r simplex on e120, tidy = TRUE, warning = FALSE, fig.width = 6}
 simplex_out <- lapply(names(composite_ts)[2:4], function(var) {
     simplex(composite_ts[, c("Year", var)], E = 2:4, 
             lib = composite_lib, pred = composite_pred)
 })
-simplex_out[[length(simplex_out)+1]] <- simplex(precip_ts, E = 2:5)
+simplex_out[[length(simplex_out) + 1]] <- simplex(precip_ts, E = 2:5)
 names(simplex_out) <- names(composite_ts)[-1]
 
-par(mar = c(4, 4, 1, 1), mfrow = c(2, 2), mgp = c(2.5, 1, 0)) # set up margins for plotting
-out<-lapply(names(simplex_out), function(var) {
+par(mar = c(4, 4, 1, 1), mfrow = c(2, 2), mgp = c(2.5, 1, 0))
+out <- lapply(names(simplex_out), function(var) {
     plot(simplex_out[[var]]$E, simplex_out[[var]]$rho, type = "l", 
          xlab = "Embedding Dimension (E)", ylab = "Forecast Skill (rho)", 
          main = var)
@@ -455,7 +462,7 @@ legend("topleft", legend = c(paste("rho =", round(AB_output$rho, 2)),
 
 ### Convergent Cross Mapping
 
-Finally, we can apply CCM to our data to test for pairwise causal links among variables. For each individual test, we use the embedding dimension corresponding to the ``best'' embedding dimension for the variable that we are trying to predict (i.e. the putative causal process).
+Finally, we can apply CCM to our data to test for pairwise causal links among variables. For each individual test, we use the embedding dimension corresponding to the "best"" embedding dimension for the variable that we are cross mapping from (i.e. the putative affected process).
 
 ```{r ccm on e120, cache = TRUE, warning = FALSE, tidy = TRUE, fig.width = 5, fig.height = 3.5}
 # A. repens:
