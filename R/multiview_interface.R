@@ -1,14 +1,14 @@
 #' Perform forecasting using multiview embedding
 #'
-#' \code{multiview} applies the method described in Ye & Sugihara (2016) for 
+#' \code{\link{multiview}} applies the method described in Ye & Sugihara (2016) for 
 #'   forecasting, wherein multiple attractor reconstructions are tested, and a 
-#'   single nearest neighbor is selected from each of the top "k" 
+#'   single nearest neighbor is selected from each of the top \code{k} 
 #'   reconstructions to produce final forecasts.
 #' 
 #'   uses multiple time series given as input to generate an attractor 
 #'   reconstruction, and then applies the simplex projection or s-map algorithm 
-#'   to make forecasts. This method generalizes the \code{simplex} and 
-#'   \code{s-map} routines, and allows for "mixed" embeddings, where multiple 
+#'   to make forecasts. This method generalizes the \code{\link{simplex}} and 
+#'   \code{\link{s_map}} routines, and allows for "mixed" embeddings, where multiple 
 #'   time series can be used as different dimensions of an attractor 
 #'   reconstruction.
 #' 
@@ -52,13 +52,15 @@
 #'   in-sample prediction (any of "e+1", "E+1", "e + 1", "E + 1" will peg this 
 #'   parameter to E+1 for each run, any value < 1 will use all possible 
 #'   neighbors.)
-#' @param k the number of embeddings to use (any of "sqrt", "SQRT" will use 
-#'   k = floor(sqrt(m)))
-#' @param na.rm logical. Should missing values (including \code{NaN} be omitted 
+#' @param k the number of embeddings to use ("sqrt" will use k = floor(sqrt(m)), 
+#'   "all" or values less than 1 will use k = m)
+#' @param na.rm logical. Should missing values (including `NaN`` be omitted 
 #'   from the calculations?)
 #' @param target_column the index (or name) of the column to forecast
 #' @param stats_only specify whether to output just the forecast statistics or 
 #'   the raw predictions for each run
+#' @param save_lagged_block specify whether to output the lagged block that 
+#'   is constructed as part of running \code{multiview}
 #' @param first_column_time indicates whether the first column of the given 
 #'   block is a time column (and therefore excluded when indexing)
 #' @param exclusion_radius excludes vectors from the search space of nearest 
@@ -73,61 +75,67 @@
 #'   tp \tab prediction horizon\cr
 #'   nn \tab number of neighbors\cr
 #'   k \tab number of embeddings used\cr
-#'   num_pred \tab number of predictions\cr
-#'   rho \tab correlation coefficient between observations and predictions\cr
-#'   mae \tab mean absolute error\cr
-#'   rmse \tab root mean square error\cr
-#'   perc \tab percent correct sign\cr
-#'   p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-#'   z-transformation\cr
-#'   const_rho \tab same as rho, but for the constant predictor\cr
-#'   const_mae \tab same as mae, but for the constant predictor\cr
-#'   const_rmse \tab same as rmse, but for the constant predictor\cr
-#'   const_perc \tab same as perc, but for the constant predictor\cr
-#'   const_p_val \tab same as p_val, but for the constant predictor
 #' }
-#' If \code{stats_only == FALSE}, then additionally a list column:
 #' \tabular{ll}{
-#'   model_output \tab data.frame with columns for the time index, 
-#'   observations, and predictions\cr
+#'   \code{E} \tab embedding dimension\cr
+#'   \code{tau} \tab time lag\cr
+#'   \code{tp} \tab prediction horizon\cr
+#'   \code{nn} \tab number of neighbors\cr
+#'   \code{k} \tab number of embeddings used\cr
+#'   \code{num_pred} \tab number of predictions\cr
+#'   \code{rho} \tab correlation coefficient between observations and 
+#'     predictions\cr
+#'   \code{mae} \tab mean absolute error\cr
+#'   \code{rmse} \tab root mean square error\cr
+#'   \code{perc} \tab percent correct sign\cr
+#'   \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+#'     Fisher's z-transformation\cr
+#'   \code{model_output} \tab data.frame with columns for the time index, 
+#'     observations, predictions, and estimated prediction variance
+#'     (if \code{stats_only == FALSE})\cr
+#'   \code{embeddings} \tab list of the columns used in each of the embeddings 
+#'     that comprise the model (if \code{stats_only == FALSE})\cr
 #' }
 #' @examples 
 #' data("block_3sp")
 #' block <- block_3sp[, c(2, 5, 8)]
 #' multiview(block, k = c(1, 3, "sqrt"))
-#' @export
+#' 
 multiview <- function(block, lib = c(1, floor(NROW(block) / 2)), 
                       pred = c(floor(NROW(block) / 2) + 1, NROW(block)), 
                       norm_type = c("L2 norm", "L1 norm", "P norm"), P = 0.5, 
                       E = 3, tau = 1, tp = 1, max_lag = 3, 
                       num_neighbors = "e+1", k = "sqrt", na.rm = FALSE, 
                       target_column = 1, 
-                      stats_only = TRUE, first_column_time = FALSE, 
+                      stats_only = TRUE, save_lagged_block = FALSE, 
+                      first_column_time = FALSE, 
                       exclusion_radius = NULL, silent = FALSE)
 {
     # setup params
-    if (is.vector(lib))
-        lib <- matrix(lib, ncol = 2, byrow = TRUE)
-    if (is.vector(pred))
-        pred <- matrix(pred, ncol = 2, byrow = TRUE)
+    lib <- coerce_lib(lib, silent = silent)
+    pred <- coerce_lib(pred, silent = silent)
     if (any(match(num_neighbors, c("e+1", "E+1", "e + 1", "E + 1")), 
            na.rm = TRUE))
         num_neighbors <- E + 1
+    num_neighbors <- as.numeric(num_neighbors)
     
     # generate lagged block and list of embeddings
     if (max_lag < 1)
-        warning("Maximum lag must be positive - setting to 1.")
+        rEDM_warning("Maximum lag must be positive - setting to 1.", 
+                     silent = silent)
     num_vars <- NCOL(block)
     if (first_column_time)
     {
         num_vars <- num_vars - 1
         lagged_block <- make_block(block[, 2:NCOL(block)], max_lag = max_lag, 
-                                   t = block[, 1], lib = lib, tau = tau)
+                                   t = block[, 1], lib = lib, tau = tau, 
+                                   restrict_to_lib = FALSE)
     } else {
         lagged_block <- make_block(block, max_lag = max_lag, 
-                                   lib = lib, tau = tau)
+                                   lib = lib, tau = tau, 
+                                   restrict_to_lib = FALSE)
     }
-    
+
     embeddings_list <- t(combn(num_vars * max_lag, E, simplify = TRUE))
     valid_embeddings_idx <- apply(embeddings_list %% max_lag, 1, 
                                   function(x) {1 %in% x})
@@ -152,7 +160,9 @@ multiview <- function(block, lib = c(1, floor(NROW(block) / 2)),
     
     # rank embeddings
     num_embeddings <- NROW(in_results)
-    k[k == "sqrt"] <- floor(sqrt(num_embeddings))
+    k[tolower(k) == "sqrt"] <- floor(sqrt(num_embeddings))
+    k[k < 1] <- num_embeddings
+    k[tolower(k) == "all"] <- num_embeddings
     k <- as.numeric(k)
     k_list <- sort(unique(pmin(k, num_embeddings)))
     
@@ -171,110 +181,51 @@ multiview <- function(block, lib = c(1, floor(NROW(block) / 2)),
                               silent = silent)
     out_time <- out_results$model_output[[1]]$time
     out_obs <- out_results$model_output[[1]]$obs
-    out_forecasts <- do.call(cbind, 
-                             lapply(out_results$model_output, function(df) {
-                                 df$pred})
-    )
-    
+    out_pred <- do.call(cbind, lapply(out_results$model_output, 
+                                      function(df) {df$pred}))
+    out_pred_var <- do.call(cbind, lapply(out_results$model_output, 
+                                          function(df) {df$pred_var}))
     # compute mve forecasts
     mve_forecasts <- lapply(k_list, function(k) {
-        if (k > 1)
-        {
-            return(rowMeans(out_forecasts[, 1:k], na.rm = na.rm))
+        if (k > 1) {
+            return(data.frame(pred = rowMeans(out_pred[, 1:k], na.rm = na.rm), 
+                              pred_var = rowMeans(out_pred_var[, 1:k], na.rm = na.rm) + 
+                                  apply(out_pred_var[, 1:k], 1, var, na.rm = na.rm)))
         } else {
-            return(out_forecasts[, 1])
+            return(data.frame(pred = out_pred[, 1], 
+                              pred_var = out_pred_var[, 1]))
         }
     })
-    
-    params <- data.frame(E = E, tau = tau, tp = tp, 
-                         nn = num_neighbors, k = k_list)
-    
+
     # return output
-    output <- lapply(mve_forecasts, function(pred) {
+    output <- lapply(mve_forecasts, function(mve_output) {
         if (stats_only)
         {
-            df <- compute_stats(out_obs, pred)
+            df <- compute_stats(out_obs, mve_output$pred)
         } else {
-            df <- compute_stats(out_obs, pred)
+            df <- compute_stats(out_obs, mve_output$pred)
             df$model_output <- I(list(data.frame(
                 time = out_time,
                 obs = out_obs, 
-                pred = pred)))
+                pred = mve_output$pred, 
+                pred_var = mve_output$pred_var)))
+        }
+        if (save_lagged_block)
+        {
+            df$lagged_block <- I(list(lagged_block))
         }
         return(df)
     })
-    return(cbind(params, do.call(rbind, output), row.names = NULL))
-}
-
-#' Make a lagged block for multiview
-#'
-#' \code{make_block} generates a lagged block with the appropriate max_lag and 
-#' tau, while respecting lib (by inserting NANs, when trying to lag past lib 
-#' regions)
-#' 
-#' @param block a data.frame or matrix where each column is a time series
-#' @param max_lag the total number of lags to include for each variable. So if 
-#'   max_lag == 3, a variable X will appear with lags X[t], X[t - tau], 
-#'   X[t - 2*tau]
-#' @param t the time index for the block
-#' @param lib a 2-column matrix (or 2-element vector) where each row specifies 
-#'   the first and last *rows* of the time series to use for attractor 
-#'   reconstruction
-#' @param tau the lag to use for time delay embedding
-#' @return A data.frame with the lagged columns and a time column. If the 
-#'   original block had columns X, Y, Z and max_lag = 3, then the returned 
-#'   data.frame will have columns TIME, X, X_1, X_2, Y, Y_1, Y_2, Z, Z_1, Z_2.
-#' 
-make_block <- function(block, max_lag = 3, t = NULL, lib = NULL, tau = 1)
-{
-    num_vars <- NCOL(block)
-    num_rows <- NROW(block)
+    output <- do.call(rbind, output)
     
-    # output is the returned data frame
-    output <- matrix(NA, nrow = num_rows, ncol = 1 + num_vars * max_lag)
-    col_names <- character(1 + num_vars * max_lag)
-
-    # create the time column
-    if (is.null(t))
-        output[, 1] <- 1:num_rows
-    else
-        output[, 1] <- t
-    col_names[1] <- "time"
-
-    # add max_lag lags for each column in block
-    col_index <- 2
-    if (is.null(colnames(block)))
-        colnames(block) <- paste0("col", num_vars)
-    for (j in 1:num_vars)
+    if (!stats_only)
     {
-        ts <- block[, j]
-        output[, col_index] <- ts
-        col_names[col_index] <- colnames(block)[j]
-        col_index <- col_index + 1
-        
-        ## add lags if required
-        if (max_lag > 1)
-        {
-            for (i in 1:(max_lag - 1))
-            {
-                ts <- c(rep_len(NA, tau), ts[1:(num_rows - tau)])
-                
-                # make sure we pad beginning of lib segments with tau x NAs
-                if (!is.null(lib))
-                {
-                    for (k in 1:NROW(lib))
-                    {
-                        ts[lib[k, 1] - 1 + (1:tau)] <- NA
-                    }
-                }
-                output[, col_index] <- ts
-                col_names[col_index] <- paste0(colnames(block)[j], "_", i * tau)
-                col_index <- col_index + 1
-            }
-        }
+        output$embeddings <- lapply(k_list, function(k) {
+            best_embeddings[seq(k)]})
     }
     
-    output <- data.frame(output)
-    names(output) <- col_names
-    return(output)
+    # setup params to append
+    params <- data.frame(E = E, tau = tau, tp = tp, 
+                         nn = num_neighbors, k = k_list)
+    return(cbind(params, output, row.names = NULL))
 }

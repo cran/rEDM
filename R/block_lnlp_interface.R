@@ -1,11 +1,11 @@
 #' Perform generalized forecasting using simplex projection or s-map
 #'
-#' \code{block_lnlp} uses multiple time series given as input to generate an 
-#'   attractor reconstruction, and then applies the simplex projection or s-map 
-#'   algorithm to make forecasts. This method generalizes the \code{simplex} 
-#'   and \code{s-map} routines, and allows for "mixed" embeddings, where 
-#'   multiple time series can be used as different dimensions of an attractor 
-#'   reconstruction.
+#' \code{\link{block_lnlp}} uses multiple time series given as input to generate 
+#'   an attractor reconstruction, and then applies the simplex projection or 
+#'   s-map algorithm to make forecasts. This method generalizes the 
+#'   \code{\link{simplex}} and \code{\link{s_map}} routines, and allows for 
+#'   "mixed" embeddings, where multiple time series can be used as different 
+#'   dimensions of an attractor reconstruction.
 #' 
 #' The default parameters are set so that passing a vector as the only argument
 #'   will use that vector to predict itself one time step ahead. If a matrix or 
@@ -67,38 +67,39 @@
 #' @return A data.frame with components for the parameters and forecast 
 #'   statistics:
 #' \tabular{ll}{
-#'   cols \tab embedding\cr
-#'   tp \tab prediction horizon\cr
-#'   nn \tab number of neighbors\cr
-#'   num_pred \tab number of predictions\cr
-#'   rho \tab correlation coefficient between observations and predictions\cr
-#'   mae \tab mean absolute error\cr
-#'   rmse \tab root mean square error\cr
-#'   perc \tab percent correct sign\cr
-#'   p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-#'   z-transformation\cr
-#'   const_rho \tab same as rho, but for the constant predictor\cr
-#'   const_mae \tab same as mae, but for the constant predictor\cr
-#'   const_rmse \tab same as rmse, but for the constant predictor\cr
-#'   const_perc \tab same as perc, but for the constant predictor\cr
-#'   const_p_val \tab same as p_val, but for the constant predictor
+#'   \code{cols} \tab embedding\cr
+#'   \code{tp} \tab prediction horizon\cr
+#'   \code{nn} \tab number of neighbors\cr
+#'   \code{num_pred} \tab number of predictions\cr
+#'   \code{rho} \tab correlation coefficient between observations and 
+#'     predictions\cr
+#'   \code{mae} \tab mean absolute error\cr
+#'   \code{rmse} \tab root mean square error\cr
+#'   \code{perc} \tab percent correct sign\cr
+#'   \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+#'     Fisher's z-transformation\cr
+#'   \code{const_rho} \tab same as \code{rho}, but for the constant predictor\cr
+#'   \code{const_mae} \tab same as \code{mae}, but for the constant predictor\cr
+#'   \code{const_rmse} \tab same as \code{rmse}, but for the constant predictor\cr
+#'   \code{const_perc} \tab same as \code{perc}, but for the constant predictor\cr
+#'   \code{const_p_val} \tab same as \code{p_val}, but for the constant predictor\cr
+#'   \code{model_output} \tab data.frame with columns for the time index, 
+#'     observations, predictions, and estimated prediction variance
+#'     (if \code{stats_only == FALSE})\cr
 #' }
-#' If \code{stats_only == FALSE}, then additionally a list column:
+#' If "s-map" is the method, then the same, but with additional columns:
 #' \tabular{ll}{
-#'   model_output \tab data.frame with columns for the time index, 
-#'     observations, predictions, and estimated prediction variance\cr
-#' }
-#' If \code{save_smap_coefficients == TRUE} and "s-map" is the method, then 
-#'   another list column:
-#' \tabular{ll}{
-#'   smap_coefficients \tab data.frame with columns for the coefficients of the 
-#'   s-map\cr
+#'   \code{theta} \tab the nonlinear tuning parameter\cr
+#'   \code{smap_coefficients} \tab data.frame with columns for the s-map 
+#'   coefficients (if \code{save_smap_coefficients == TRUE})\cr
+#'   \code{smap_coefficient_covariances} \tab list of covariance matrices for 
+#'   the s-map coefficients (if \code{save_smap_coefficients == TRUE})\cr
 #' }
 #' @examples 
 #' data("two_species_model")
 #' block <- two_species_model[1:200,]
 #' block_lnlp(block, columns = c("x", "y"), first_column_time = TRUE)
-#' @export
+#' 
 block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib, 
                        norm_type = c("L2 norm", "L1 norm", "P norm"), P = 0.5, 
                        method = c("simplex", "s-map"), 
@@ -116,7 +117,8 @@ block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib,
     
     # setup data
     block <- setup_time_and_data_block(model, first_column_time, block)
-    model$set_target_column(convert_to_column_indices(target_column, block))
+    model$set_target_column(convert_to_column_indices(target_column, block, 
+                                                      silent = silent))
     
     # setup norm and pred types
     model$set_norm_type(switch(match.arg(norm_type), 
@@ -135,7 +137,10 @@ block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib,
     }
     
     # setup lib and pred ranges
-    setup_lib_and_pred(model, lib, pred)
+    lib <- coerce_lib(lib, silent = silent)
+    pred <- coerce_lib(pred, silent = silent)
+    model$set_lib(lib)
+    model$set_pred(pred)
     
     # handle remaining arguments and flags
     setup_model_flags(model, exclusion_radius, epsilon, silent)
@@ -150,13 +155,13 @@ block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib,
         columns <- list(1:NCOL(block))
     } else if (is.list(columns)) {
         columns <- lapply(columns, function(embedding) {
-            convert_to_column_indices(embedding, block)
+            convert_to_column_indices(embedding, block, silent = silent)
         })
     } else if (is.vector(columns)) {
-        columns <- list(convert_to_column_indices(columns, block))
+        columns <- list(convert_to_column_indices(columns, block, silent = silent))
     } else if (is.matrix(columns)) {
         columns <- lapply(1:NROW(columns), function(i) {
-            convert_to_column_indices(columns[i,], block)})
+            convert_to_column_indices(columns[i,], block, silent = silent)})
     }
     embedding_index <- seq_along(columns)
     
@@ -170,6 +175,17 @@ block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib,
                                 c("e+1", "E+1", "e + 1", "E + 1"))
         if (any(e_plus_1_index, na.rm = TRUE))
             params$nn <- 1 + sapply(columns, length)
+        params$nn <- as.numeric(params$nn)
+        
+        # check params
+        idx <- sapply(seq(NROW(params)), function(i) {
+            check_params_against_lib(1, 0, params$tp[i], lib, silent = silent)})
+        if (!any(idx))
+        {
+            stop("No valid parameter combinations to run, stopping.")
+        }
+        params <- params[idx, ]
+        
         # apply model prediction function to params
         output <- lapply(1:NROW(params), function(i) {
             model$set_embedding(columns[[params$embedding[i]]])
@@ -186,6 +202,8 @@ block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib,
                 {
                     df$smap_coefficients <- 
                         I(list(model$get_smap_coefficients()))
+                    df$smap_coefficient_covariances <- 
+                        I(list(model$get_smap_coefficient_covariances()))
                 }
             }
             return(df)
@@ -199,12 +217,23 @@ block_lnlp <- function(block, lib = c(1, NROW(block)), pred = lib,
                                 c("e+1", "E+1", "e + 1", "E + 1"))
         if (any(e_plus_1_index, na.rm = TRUE))
             params$nn <- 1 + sapply(columns, length)
+        params$nn <- as.numeric(params$nn)
+        
+        # check params
+        idx <- sapply(seq(NROW(params)), function(i) {
+            check_params_against_lib(1, 0, params$tp[i], lib, silent = silent)})
+        if (!any(idx))
+        {
+            stop("No valid parameter combinations to run, stopping.")
+        }
+        params <- params[idx, ]
+        
         # apply model prediction function to params
         output <- lapply(1:NROW(params), function(i) {
             model$set_embedding(columns[[params$embedding[i]]])
             model$set_params(params$tp[i], params$nn[i])
             model$run()
-            if(stats_only)
+            if (stats_only)
             {
                 df <- model$get_stats()
             } else {

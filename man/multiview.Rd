@@ -8,8 +8,8 @@ multiview(block, lib = c(1, floor(NROW(block)/2)),
   pred = c(floor(NROW(block)/2) + 1, NROW(block)), norm_type = c("L2 norm",
   "L1 norm", "P norm"), P = 0.5, E = 3, tau = 1, tp = 1, max_lag = 3,
   num_neighbors = "e+1", k = "sqrt", na.rm = FALSE, target_column = 1,
-  stats_only = TRUE, first_column_time = FALSE, exclusion_radius = NULL,
-  silent = FALSE)
+  stats_only = TRUE, save_lagged_block = FALSE, first_column_time = FALSE,
+  exclusion_radius = NULL, silent = FALSE)
 }
 \arguments{
 \item{block}{either a vector to be used as the time series, or a 
@@ -41,16 +41,19 @@ in-sample prediction (any of "e+1", "E+1", "e + 1", "E + 1" will peg this
 parameter to E+1 for each run, any value < 1 will use all possible 
 neighbors.)}
 
-\item{k}{the number of embeddings to use (any of "sqrt", "SQRT" will use 
-k = floor(sqrt(m)))}
+\item{k}{the number of embeddings to use ("sqrt" will use k = floor(sqrt(m)), 
+"all" or values less than 1 will use k = m)}
 
-\item{na.rm}{logical. Should missing values (including \code{NaN} be omitted 
+\item{na.rm}{logical. Should missing values (including `NaN`` be omitted 
 from the calculations?)}
 
 \item{target_column}{the index (or name) of the column to forecast}
 
 \item{stats_only}{specify whether to output just the forecast statistics or 
 the raw predictions for each run}
+
+\item{save_lagged_block}{specify whether to output the lagged block that 
+is constructed as part of running \code{multiview}}
 
 \item{first_column_time}{indicates whether the first column of the given 
 block is a time column (and therefore excluded when indexing)}
@@ -70,36 +73,39 @@ A data.frame with components for the parameters and forecast
   tp \tab prediction horizon\cr
   nn \tab number of neighbors\cr
   k \tab number of embeddings used\cr
-  num_pred \tab number of predictions\cr
-  rho \tab correlation coefficient between observations and predictions\cr
-  mae \tab mean absolute error\cr
-  rmse \tab root mean square error\cr
-  perc \tab percent correct sign\cr
-  p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-  z-transformation\cr
-  const_rho \tab same as rho, but for the constant predictor\cr
-  const_mae \tab same as mae, but for the constant predictor\cr
-  const_rmse \tab same as rmse, but for the constant predictor\cr
-  const_perc \tab same as perc, but for the constant predictor\cr
-  const_p_val \tab same as p_val, but for the constant predictor
 }
-If \code{stats_only == FALSE}, then additionally a list column:
 \tabular{ll}{
-  model_output \tab data.frame with columns for the time index, 
-  observations, and predictions\cr
+  \code{E} \tab embedding dimension\cr
+  \code{tau} \tab time lag\cr
+  \code{tp} \tab prediction horizon\cr
+  \code{nn} \tab number of neighbors\cr
+  \code{k} \tab number of embeddings used\cr
+  \code{num_pred} \tab number of predictions\cr
+  \code{rho} \tab correlation coefficient between observations and 
+    predictions\cr
+  \code{mae} \tab mean absolute error\cr
+  \code{rmse} \tab root mean square error\cr
+  \code{perc} \tab percent correct sign\cr
+  \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+    Fisher's z-transformation\cr
+  \code{model_output} \tab data.frame with columns for the time index, 
+    observations, predictions, and estimated prediction variance
+    (if \code{stats_only == FALSE})\cr
+  \code{embeddings} \tab list of the columns used in each of the embeddings 
+    that comprise the model (if \code{stats_only == FALSE})\cr
 }
 }
 \description{
-\code{multiview} applies the method described in Ye & Sugihara (2016) for 
+\code{\link{multiview}} applies the method described in Ye & Sugihara (2016) for 
   forecasting, wherein multiple attractor reconstructions are tested, and a 
-  single nearest neighbor is selected from each of the top "k" 
+  single nearest neighbor is selected from each of the top \code{k} 
   reconstructions to produce final forecasts.
 }
 \details{
 uses multiple time series given as input to generate an attractor 
   reconstruction, and then applies the simplex projection or s-map algorithm 
-  to make forecasts. This method generalizes the \code{simplex} and 
-  \code{s-map} routines, and allows for "mixed" embeddings, where multiple 
+  to make forecasts. This method generalizes the \code{\link{simplex}} and 
+  \code{\link{s_map}} routines, and allows for "mixed" embeddings, where multiple 
   time series can be used as different dimensions of an attractor 
   reconstruction.
 
@@ -128,4 +134,5 @@ norm type "P norm" uses the P norm, generalizing the L1 and L2 norm to use
 data("block_3sp")
 block <- block_3sp[, c(2, 5, 8)]
 multiview(block, k = c(1, 3, "sqrt"))
+
 }

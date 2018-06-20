@@ -1,9 +1,9 @@
-#' Perform generalized forecasting using Gaussian processes
+#' (generalized) Block forecasting using Gaussian Processes
 #'
-#' \code{block_gp} uses multiple time series given as input to generate an 
+#' \code{\link{block_gp}} uses multiple time series given as input to generate an 
 #' attractor reconstruction, and then applies Gaussian process regression to 
 #' approximate the dynamics and make forecasts. This method is the 
-#' generalized version of \code{tde_gp}, which constructs the block from 
+#' generalized version of \code{\link{tde_gp}}, which constructs the block from 
 #' lags of a time series to pass into this function.
 #' 
 #' The default parameters are set so that passing a vector as the only 
@@ -102,36 +102,32 @@
 #' @return If stats_only, then a data.frame with components for the parameters 
 #'   and forecast statistics:
 #' \tabular{ll}{
-#'   embedding \tab embedding\cr
-#'   tp \tab prediction horizon\cr
-#'   phi \tab length-scale parameter\cr
-#'   v_e \tab noise-variance parameter\cr
-#'   eta \tab signal-variance parameter\cr
-#'   fit_params \tab whether params were fitted or not\cr
-#'   num_pred \tab number of predictions\cr
-#'   rho \tab correlation coefficient between observations and predictions\cr
-#'   mae \tab mean absolute error\cr
-#'   rmse \tab root mean square error\cr
-#'   perc \tab percent correct sign\cr
-#'   p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-#'   z-transformation\cr
-#' }
-#' If stats_only is FALSE or save_covariance_matrix is TRUE, then there is an 
-#' additional list-column variable:
-#' \tabular{ll}{
-#'   model_output \tab data.frame with columns for the time index, 
-#'     observations, and mean-value for predictions\cr
-#' }
-#' If save_covariance_matrix is TRUE, then there is an additional list-column 
-#'   variable:
-#' \tabular{ll}{
-#'   covariance_matrix \tab covariance matrix for predictions\cr
+#'   \code{embedding} \tab embedding\cr
+#'   \code{tp} \tab prediction horizon\cr
+#'   \code{phi} \tab length-scale parameter\cr
+#'   \code{v_e} \tab noise-variance parameter\cr
+#'   \code{eta} \tab signal-variance parameter\cr
+#'   \code{fit_params} \tab whether params were fitted or not\cr
+#'   \code{num_pred} \tab number of predictions\cr
+#'   \code{rho} \tab correlation coefficient between observations and 
+#'     predictions\cr
+#'   \code{mae} \tab mean absolute error\cr
+#'   \code{rmse} \tab root mean square error\cr
+#'   \code{perc} \tab percent correct sign\cr
+#'   \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+#'     Fisher's z-transformation\cr
+#'   \code{model_output} \tab data.frame with columns for the time index, 
+#'     observations, mean-value for predictions, and independent variance for 
+#'     predictions (if \code{stats_only == FALSE} or 
+#'     \code{save_covariance_matrix == TRUE})\cr
+#'   \code{covariance_matrix} \tab the full covariance matrix for predictions 
+#'     (if \code{save_covariance_matrix == TRUE})\cr
 #' }
 #' @examples 
 #' data("two_species_model")
 #' block <- two_species_model[1:200,]
 #' block_gp(block, columns = c("x", "y"), first_column_time = TRUE)
-#' @export
+#' 
 block_gp <- function(block, lib = c(1, NROW(block)), pred = lib, 
                      tp = 1, phi = 0, v_e = 0, eta = 0, 
                      fit_params = TRUE, 
@@ -147,7 +143,7 @@ block_gp <- function(block, lib = c(1, NROW(block)), pred = lib,
         else
         {
             time <- block[, 1]
-            block <- block[, -1]
+            block <- block[, -1, drop = FALSE]
         }
     }
     else
@@ -185,17 +181,9 @@ block_gp <- function(block, lib = c(1, NROW(block)), pred = lib,
     target_column <- convert_to_column_indices(target_column, block)
     
     # setup lib and pred ranges
-    if (is.vector(lib))
-        lib <- matrix(lib, ncol = 2, byrow = TRUE)
-    if (is.vector(pred))
-        pred <- matrix(pred, ncol = 2, byrow = TRUE)
-    if (!all(lib[, 2] >= lib[, 1]))
-        warning("Some library rows look incorrectly formatted, please check ",
-                "the lib argument.")
-    if (!all(pred[, 2] >= pred[, 1]))
-        warning("Some library rows look incorrectly formatted, please check ", 
-                "the pred argument.")
-    
+    lib <- coerce_lib(lib, silent = silent)
+    pred <- coerce_lib(pred, silent = silent)
+
     params <- expand.grid(tp = tp, 
                           phi = phi, 
                           v_e = v_e, 
@@ -241,13 +229,13 @@ block_gp <- function(block, lib = c(1, NROW(block)), pred = lib,
         x_pred <- as.matrix(block[pred_idx, embedding, drop = FALSE])
         y_pred <- block[pred_idx + tp, target_column]
         time_pred <- time[pred_idx + tp]
-
+        
         # filter x_lib and y_lib to finite values
         valid_lib_idx <- apply(is.finite(x_lib), 1, all) & is.finite(y_lib)
         if (sum(valid_lib_idx) < length(valid_lib_idx))
         {
-            warning("Trimmed ", length(valid_lib_idx), " lib points down to ", 
-                    sum(valid_lib_idx), " valid ones.")
+            rEDM_warning("Trimmed ", length(valid_lib_idx), " lib points down to ", 
+                         sum(valid_lib_idx), " valid ones.", silent = silent)
             x_lib <- x_lib[valid_lib_idx, , drop = FALSE]
             y_lib <- y_lib[valid_lib_idx]
         }
@@ -258,8 +246,8 @@ block_gp <- function(block, lib = c(1, NROW(block)), pred = lib,
         valid_pred_idx <- apply(is.finite(x_pred), 1, all)
         if (sum(valid_pred_idx) < length(valid_pred_idx))
         {
-            warning("Trimmed ", length(valid_pred_idx), " pred points down to ",
-                    sum(valid_pred_idx), " valid ones.")
+            rEDM_warning("Trimmed ", length(valid_pred_idx), " pred points down to ",
+                    sum(valid_pred_idx), " valid ones.", silent = silent)
             x_pred <- x_pred[valid_pred_idx, , drop = FALSE]
             y_pred <- y_pred[valid_pred_idx]
         }
@@ -298,7 +286,8 @@ block_gp <- function(block, lib = c(1, NROW(block)), pred = lib,
         {
             out_df$model_output <- list(data.frame(time = time_pred[valid_pred_idx], 
                                                    obs = y_pred, 
-                                                   pred = out_gp$mean_pred))
+                                                   pred = out_gp$mean_pred, 
+                                                   pred_var = out_gp$pred_var))
             if (save_covariance_matrix)
             {
                 out_df$covariance_matrix <- list(out_gp$covariance_pred)
@@ -437,7 +426,7 @@ compute_gp <- function(x_lib, y_lib,
     #   process noise,
     #     e ~ N(0, v_e)
     # such that the covariance of observations y_i and y_j is
-    #     K_ij =C_ij + v_e I_ij
+    #     K_ij = C_ij + v_e I_ij
     # with I the identity matrix or a kronecker delta
     
     ### Usage
@@ -527,7 +516,7 @@ compute_gp <- function(x_lib, y_lib,
     # marginal likelihood
     log_likelihood_lib <- (-0.5 * t(y_lib - mean_y) %*% alpha) - 
         sum(log(diag(R)))
-    out$neg_log_likelihood <- - (log_likelihood_lib + log_likelihood_params)
+    out$neg_log_likelihood <- -(log_likelihood_lib + log_likelihood_params)
     # out$neg_log_likelihood_L00 <- 
     #     0.5 * sum(log(diag(Sigma_inv))) -
     #     0.5 * sum(alpha ^ 2 / diag(Sigma_inv))
@@ -555,12 +544,14 @@ compute_gp <- function(x_lib, y_lib,
     ### Compute mean and variance for x_pred if given
     if (!is.null(x_pred))
     {
+        covariance_matrix <- K_pred_pred - 
+            K_pred_lib %*% Sigma_inv %*% t(K_pred_lib) + 
+            v_e_scaled
         out$mean_pred <- mean_y + K_pred_lib %*% alpha
+        out$pred_var <- diag(covariance_matrix)
         if (cov_matrix)
         {
-            out$covariance_pred <- K_pred_pred - 
-                K_pred_lib %*% Sigma_inv %*% t(K_pred_lib) + 
-                v_e_scaled
+            out$covariance_pred <- covariance_matrix
         }
     }
     

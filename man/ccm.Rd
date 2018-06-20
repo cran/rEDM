@@ -69,15 +69,15 @@ off)}
 A data.frame with forecast statistics for the different parameter 
   settings:
 \tabular{ll}{
-  L \tab library length (number of vectors)\cr
-  num_pred \tab number of predictions\cr
-  rho \tab correlation coefficient between observations and predictions\cr
-  mae \tab mean absolute error\cr
-  rmse \tab root mean square error
+  \code{L} \tab library length (number of vectors)\cr
+  \code{num_pred} \tab number of predictions\cr
+  \code{rho} \tab correlation coefficient between observations and predictions\cr
+  \code{mae} \tab mean absolute error\cr
+  \code{rmse} \tab root mean square error
 }
 }
 \description{
-\code{ccm} uses time delay embedding on one time series to generate an 
+\code{\link{ccm}} uses time delay embedding on one time series to generate an 
 attractor reconstruction, and then applies the simplex projection algorithm 
 to estimate concurrent values of another time series. This method is 
 typically applied, varying the library sizes, to determine if one time series
@@ -107,4 +107,5 @@ data("sardine_anchovy_sst")
 anchovy_xmap_sst <- ccm(sardine_anchovy_sst, E = 3, 
   lib_column = "anchovy", target_column = "np_sst", 
   lib_sizes = seq(10, 80, by = 10), num_samples = 100)
+ 
 }

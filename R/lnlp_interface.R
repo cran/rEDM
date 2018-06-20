@@ -3,14 +3,14 @@
 #' 
 #' @title Perform univariate forecasting
 
-#' @details \code{simplex} is typically applied, and the embedding dimension 
+#' @details \code{\link{simplex}} is typically applied, and the embedding dimension 
 #' varied, to find an optimal embedding dimension for the data. Thus, the 
 #' default parameters are set so that passing a time series as the only 
 #' argument will run over E = 1:10 (embedding dimension), using leave-one-out 
 #' cross-validation over the whole time series, and returning just the forecast 
 #' statistics.
 #' 
-#' \code{s_map} is typically applied, with fixed embedding dimension, and theta 
+#' \code{\link{s_map}} is typically applied, with fixed embedding dimension, and theta 
 #' varied, to test for nonlinear dynamics in the data. Thus, the default 
 #' parameters are set so that passing a time series as the only  argument will 
 #' run over a default list of thetas (0, 0.0001, 0.0003, 0.001, 0.003, 0.01, 
@@ -63,34 +63,33 @@
 
 #' @rdname simplex
 #' 
-#' @description \code{simplex} uses time delay embedding on a single time 
+#' @description \code{\link{simplex}} uses time delay embedding on a single time 
 #'   series to generate an attractor reconstruction, and then applies the 
 #'   simplex projection algorithm to make forecasts.
 #' 
-#' @return For \code{simplex}, a data.frame with components for the parameters 
-#'   and forecast statistics:
+#' @return For \code{\link{simplex}}, a data.frame with components for the 
+#'   parameters and forecast statistics:
 #' \tabular{ll}{
-#'   E \tab embedding dimension\cr
-#'   tau \tab time lag\cr
-#'   tp \tab prediction horizon\cr
-#'   nn \tab number of neighbors\cr
-#'   num_pred \tab number of predictions\cr
-#'   rho \tab correlation coefficient between observations and predictions\cr
-#'   mae \tab mean absolute error\cr
-#'   rmse \tab root mean square error\cr
-#'   perc \tab percent correct sign\cr
-#'   p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-#'   z-transformation\cr
-#'   const_rho \tab same as rho, but for the constant predictor\cr
-#'   const_mae \tab same as mae, but for the constant predictor\cr
-#'   const_rmse \tab same as rmse, but for the constant predictor\cr
-#'   const_perc \tab same as perc, but for the constant predictor\cr
-#'   const_p_val \tab same as p_val, but for the constant predictor
-#' }
-#'   If \code{stats_only == FALSE}, then additionally a list column:
-#' \tabular{ll}{
-#'   model_output \tab data.frame with columns for the time index, 
-#'     observations, predictions, and estimated prediction variance\cr
+#'   \code{E} \tab embedding dimension\cr
+#'   \code{tau} \tab time lag\cr
+#'   \code{tp} \tab prediction horizon\cr
+#'   \code{nn} \tab number of neighbors\cr
+#'   \code{num_pred} \tab number of predictions\cr
+#'   \code{rho} \tab correlation coefficient between observations and 
+#'     predictions\cr
+#'   \code{mae} \tab mean absolute error\cr
+#'   \code{rmse} \tab root mean square error\cr
+#'   \code{perc} \tab percent correct sign\cr
+#'   \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+#'     Fisher's z-transformation\cr
+#'   \code{const_rho} \tab same as \code{rho}, but for the constant predictor\cr
+#'   \code{const_mae} \tab same as \code{mae}, but for the constant predictor\cr
+#'   \code{const_rmse} \tab same as \code{rmse}, but for the constant predictor\cr
+#'   \code{const_perc} \tab same as \code{perc}, but for the constant predictor\cr
+#'   \code{const_p_val} \tab same as \code{p_val}, but for the constant predictor\cr
+#'   \code{model_output} \tab data.frame with columns for the time index, 
+#'     observations, predictions, and estimated prediction variance
+#'     (if \code{stats_only == FALSE})\cr
 #' }
 #' @examples 
 #' data("two_species_model")
@@ -99,24 +98,22 @@
 #' 
 #' data("two_species_model")
 #' ts <- two_species_model$x[1:200]
-#' #' simplex(ts, stats_only = FALSE)
-#' @export 
+#' simplex(ts, stats_only = FALSE)
+#'  
 simplex <- function(time_series, lib = c(1, NROW(time_series)), pred = lib, 
                     norm_type = c("L2 norm", "L1 norm", "P norm"), P = 0.5, 
                     E = 1:10, tau = 1, tp = 1, num_neighbors = "e+1", 
                     stats_only = TRUE, exclusion_radius = NULL, epsilon = NULL, 
                     silent = FALSE)
 {
-    # check inputs?
-    
     # make new model object
     model <- new(LNLP)
     
     # setup data
     if (is.vector(time_series)) {
-        if(!is.null(names(time_series))) {
+        if (!is.null(names(time_series))) {
             time <- as.numeric(names(time_series))
-            if(any(is.na(time)))
+            if (any(is.na(time)))
                 time <- seq_along(time_series)
         } else {
             time <- seq_along(time_series)
@@ -136,7 +133,10 @@ simplex <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
     model$set_pred_type(2)
     
     # setup lib and pred ranges
-    setup_lib_and_pred(model, lib, pred)
+    lib <- coerce_lib(lib, silent = silent)
+    pred <- coerce_lib(pred, silent = silent)
+    model$set_lib(lib)
+    model$set_pred(pred)
 
     # handle remaining arguments and flags
     setup_model_flags(model, exclusion_radius, epsilon, silent)
@@ -148,9 +148,20 @@ simplex <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
     e_plus_1_index <- match(num_neighbors, c("e+1", "E+1", "e + 1", "E + 1"))
     if (any(e_plus_1_index, na.rm = TRUE))
         params$nn <- params$E + 1
-        
+    params$nn <- as.numeric(params$nn)
+    
+    # check params
+    idx <- sapply(seq(NROW(params)), function(i) {
+        check_params_against_lib(params$E[i], params$tau[i], params$tp[i], lib, 
+                                 silent = silent)})
+    if (!any(idx))
+    {
+        stop("No valid parameter combinations to run, stopping.")
+    }
+    params <- params[idx, ]
+    
     # apply model prediction function to params
-    output <- lapply(1:NROW(params), function(i) {
+    output <- lapply(seq(NROW(params)), function(i) {
         model$set_params(params$E[i], params$tau[i], params$tp[i], params$nn[i])
         model$run()
         if (stats_only)
@@ -168,12 +179,17 @@ simplex <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
 
 #' @rdname simplex
 #' 
-#' @description \code{s_map} is similar to \code{simplex}, but uses the S-map 
+#' @description \code{\link{s_map}} is similar to \code{\link{simplex}}, but uses the S-map 
 #'   algorithm to make forecasts.
-#' @return For \code{s_map}, the same as for \code{simplex}, but with an 
-#'   additional column for the value of theta. If 
-#'   \code{save_smap_coefficients == TRUE}, then an additional list-column for 
-#'   the S-map coefficients.
+#' @return For \code{\link{s_map}}, the same as for \code{\link{simplex}}, but 
+#'   with additional columns:
+#' \tabular{ll}{
+#'   \code{theta} \tab the nonlinear tuning parameter\cr
+#'   \code{smap_coefficients} \tab data.frame with columns for the s-map 
+#'   coefficients (if \code{save_smap_coefficients == TRUE})\cr
+#'   \code{smap_coefficient_covariances} \tab list of covariance matrices for 
+#'   the s-map coefficients (if \code{save_smap_coefficients == TRUE})\cr
+#' }
 #' @examples 
 #' data("two_species_model")
 #' ts <- two_species_model$x[1:200]
@@ -182,7 +198,7 @@ simplex <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
 #' data("two_species_model")
 #' ts <- two_species_model$x[1:200]
 #' s_map(ts, E = 2, theta = 1, save_smap_coefficients = TRUE)
-#' @export
+#' 
 s_map <- function(time_series, lib = c(1, NROW(time_series)), pred = lib, 
                   norm_type = c("L2 norm", "L1 norm", "P norm"), P = 0.5, 
                   E = 1, tau = 1, tp = 1, num_neighbors = 0, 
@@ -214,7 +230,10 @@ s_map <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
     model$set_pred_type(1)
     
     # setup lib and pred ranges
-    setup_lib_and_pred(model, lib, pred)
+    lib <- coerce_lib(lib, silent = silent)
+    pred <- coerce_lib(pred, silent = silent)
+    model$set_lib(lib)
+    model$set_pred(pred)
         
     # handle remaining arguments and flags
     setup_model_flags(model, exclusion_radius, epsilon, silent)
@@ -232,6 +251,17 @@ s_map <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
     e_plus_1_index <- match(num_neighbors, c("e+1", "E+1", "e + 1", "E + 1"))
     if (any(e_plus_1_index, na.rm = TRUE))
         params$nn <- params$E + 1
+    params$nn <- as.numeric(params$nn)
+    
+    # check params
+    idx <- sapply(seq(NROW(params)), function(i) {
+        check_params_against_lib(params$E[i], params$tau[i], params$tp[i], lib, 
+                                 silent = silent)})
+    if (!any(idx))
+    {
+        stop("No valid parameter combinations to run, stopping.")
+    }
+    params <- params[idx, ]
     
     # apply model prediction function to params
     output <- lapply(1:NROW(params), function(i) {
@@ -247,6 +277,7 @@ s_map <- function(time_series, lib = c(1, NROW(time_series)), pred = lib,
             if (save_smap_coefficients)
             {
                 df$smap_coefficients <- I(list(model$get_smap_coefficients()))
+                df$smap_coefficient_covariances <- I(list(model$get_smap_coefficient_covariances()))
             }
         }
         return(df)

@@ -1,6 +1,6 @@
 #' Perform convergent cross mapping using simplex projection
 #'
-#' \code{ccm} uses time delay embedding on one time series to generate an 
+#' \code{\link{ccm}} uses time delay embedding on one time series to generate an 
 #' attractor reconstruction, and then applies the simplex projection algorithm 
 #' to estimate concurrent values of another time series. This method is 
 #' typically applied, varying the library sizes, to determine if one time series
@@ -60,18 +60,18 @@
 #' @return A data.frame with forecast statistics for the different parameter 
 #'   settings:
 #' \tabular{ll}{
-#'   L \tab library length (number of vectors)\cr
-#'   num_pred \tab number of predictions\cr
-#'   rho \tab correlation coefficient between observations and predictions\cr
-#'   mae \tab mean absolute error\cr
-#'   rmse \tab root mean square error
+#'   \code{L} \tab library length (number of vectors)\cr
+#'   \code{num_pred} \tab number of predictions\cr
+#'   \code{rho} \tab correlation coefficient between observations and predictions\cr
+#'   \code{mae} \tab mean absolute error\cr
+#'   \code{rmse} \tab root mean square error
 #' }
 #' @examples
 #' data("sardine_anchovy_sst")
 #' anchovy_xmap_sst <- ccm(sardine_anchovy_sst, E = 3, 
 #'   lib_column = "anchovy", target_column = "np_sst", 
 #'   lib_sizes = seq(10, 80, by = 10), num_samples = 100)
-#' @export 
+#'  
 ccm <- function(block, lib = c(1, NROW(block)), pred = lib, 
                 norm_type = c("L2 norm", "L1 norm", "LP norm"), P = 0.5, E = 1, 
                 tau = 1, tp = 0, num_neighbors = "e+1", 
@@ -85,8 +85,12 @@ ccm <- function(block, lib = c(1, NROW(block)), pred = lib,
     
     # setup data
     block <- setup_time_and_data_block(model, first_column_time, block)
-    model$set_lib_column(convert_to_column_indices(lib_column, block))
-    model$set_target_column(convert_to_column_indices(target_column, block))
+    my_lib_column <- convert_to_column_indices(lib_column, block, 
+                                               silent = silent)
+    model$set_lib_column(my_lib_column)
+    my_target_column <- convert_to_column_indices(target_column, block, 
+                                                  silent = silent)
+    model$set_target_column(my_target_column)
     
     # setup norm type
     model$set_norm_type(switch(match.arg(norm_type), 
@@ -94,12 +98,20 @@ ccm <- function(block, lib = c(1, NROW(block)), pred = lib,
     model$set_p(P)
     
     # setup lib and pred ranges
-    setup_lib_and_pred(model, lib, pred)
-
+    lib <- coerce_lib(lib, silent = silent)
+    pred <- coerce_lib(pred, silent = silent)
+    model$set_lib(lib)
+    model$set_pred(pred)
+    
+    # check lib_sizes
     prev_num_lib_sizes <- length(lib_sizes)
+    lib_sizes <- lib_sizes[lib_sizes >= 0]
     lib_sizes <- unique(sort(lib_sizes))
+    if(length(lib_sizes) < 1)
+        stop("No valid lib sizes found among input", lib_sizes)
     if (length(lib_sizes) < prev_num_lib_sizes)
-        warning("Some requested lib sizes were redundant and ignored.")
+        rEDM_warning("Some requested lib sizes were redundant or bad and ignored.", 
+                     silent = silent)
     model$set_lib_sizes(lib_sizes)
     
     # handle exclusion radius
@@ -115,20 +127,25 @@ ccm <- function(block, lib = c(1, NROW(block)), pred = lib,
     if (silent)
     {
         model$suppress_warnings()
-    } else {
-        warning("Note: CCM results are typically interpreted in the opposite ", 
-                "direction of causation. Please see 'Detecting causality in ", 
-                "complex ecosystems' (Sugihara et al. 2012) for more details.")
     }
+    rEDM_warning("Note: CCM results are typically interpreted in the opposite ", 
+                 "direction of causation. Please see 'Detecting causality in ", 
+                 "complex ecosystems' (Sugihara et al. 2012) for more details.", 
+                 silent = silent)
     
-    # check inputs?
-    
-    params <- data.frame(E, tau, tp, num_neighbors, lib_column, target_column)
+    params <- data.frame(E, tau, tp, nn = num_neighbors, lib_column, target_column)
     e_plus_1_index <- match(num_neighbors, c("e+1", "E+1", "e + 1", "E + 1"))
     if (any(e_plus_1_index, na.rm = TRUE))
-        params$num_neighbors <- params$E+1
-
-    model$set_params(params$E, params$tau, params$tp, params$num_neighbors, 
+        params$nn <- params$E+1
+    params$nn <- as.numeric(params$nn)
+    
+    if (!check_params_against_lib(params$E, params$tau, params$tp, lib, 
+                                  silent = silent))
+    {
+        stop("Parameter combination was invalid, stopping.")
+    }
+    
+    model$set_params(params$E, params$tau, params$tp, params$nn, 
                      random_libs, num_samples, replace)
     if (!is.null(RNGseed))
         model$set_seed(RNGseed)
@@ -139,7 +156,7 @@ ccm <- function(block, lib = c(1, NROW(block)), pred = lib,
 
 #' Take output from ccm and compute means as a function of library size.
 #'
-#' \code{ccm_means} is a utility function to summarize output from the 
+#' \code{\link{ccm_means}} is a utility function to summarize output from the 
 #'   \code{\link{ccm}} function
 #' 
 #' @param ccm_df a data.frame, usually output from the \code{\link{ccm}} 
@@ -155,7 +172,7 @@ ccm <- function(block, lib = c(1, NROW(block)), pred = lib,
 #'   lib_column = "anchovy", target_column = "np_sst", 
 #'   lib_sizes = seq(10, 80, by = 10), num_samples = 100)
 #' a_xmap_t_means <- ccm_means(anchovy_xmap_sst)
-#' @export 
+#'  
 ccm_means <- function(ccm_df, FUN = mean, ...)
 {
     lib <- ccm_df$lib_column[!duplicated(ccm_df$lib_size)]
