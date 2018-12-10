@@ -1,21 +1,19 @@
-#' (univariate) Time-Delay Embedding forecasting using Gaussian Processes
+#' Perform univariate forecasting using Gaussian processes
 #' 
-#' \code{\link{tde_gp}} is used in the same vein as \code{\link{simplex}} or \code{\link{s_map}} to 
+#' \code{tde_gp} is used in the same vein as \code{simplex} or \code{s-map} to 
 #' do time series forecasting using Gaussian processes. Here, the default 
 #' parameters are set so that passing a time series as the only argument will 
 #' run over E = 1:10 (embedding dimension) to created a lagged block, and 
-#' passing in that block and all remaining arguments into \code{\link{block_gp}}.
+#' passing in that block and all remaining arguments into \code{block_gp}.
 #' 
-#' See \code{\link{block_gp}} for implementation details of the Gaussian process 
+#' See \code{block_gp} for implementation details of the Gaussian process 
 #' regression.
 #' 
 #' @param time_series either a vector to be used as the time series, or a 
-#'   data.frame or matrix with at least 2 columns (in which case the first 
-#'   column will be used as the time index, and the second column as the time 
-#'   series)
-#' @param lib a 2-column matrix (or 2-element vector) where each row specifes 
-#'   the first and last *rows* of the time series to use for attractor 
-#'   reconstruction
+#'   data.frame or matrix with at least 2 columns (in which case the first column 
+#'   will be used as the time index, and the second column as the time series)
+#' @param lib a 2-column matrix (or 2-element vector) where each row specifes the 
+#'   first and last *rows* of the time series to use for attractor reconstruction
 #' @param pred (same format as lib), but specifying the sections of the time 
 #'   series to forecast.
 #' @param E the embedding dimensions to use for time delay embedding
@@ -35,76 +33,90 @@
 #' @return If stats_only, then a data.frame with components for the parameters 
 #'   and forecast statistics:
 #' \tabular{ll}{
-#'   \code{E} \tab embedding dimension\cr
-#'   \code{tau} \tab time lag\cr
-#'   \code{tp} \tab prediction horizon\cr
-#'   \code{phi} \tab length-scale parameter\cr
-#'   \code{v_e} \tab noise-variance parameter\cr
-#'   \code{eta} \tab signal-variance parameter\cr
-#'   \code{fit_params} \tab whether params were fitted or not\cr
-#'   \code{num_pred} \tab number of predictions\cr
-#'   \code{rho} \tab correlation coefficient between observations and 
-#'     predictions\cr
-#'   \code{mae} \tab mean absolute error\cr
-#'   \code{rmse} \tab root mean square error\cr
-#'   \code{perc} \tab percent correct sign\cr
-#'   \code{p_val} \tab p-value that rho is significantly greater than 0 using 
-#'     Fisher's z-transformation\cr
-#'   \code{model_output} \tab data.frame with columns for the time index, 
-#'     observations, mean-value for predictions, and independent variance for 
-#'     predictions (if \code{stats_only == FALSE} or 
-#'     \code{save_covariance_matrix == TRUE})\cr
-#'   \code{covariance_matrix} \tab the full covariance matrix for predictions 
-#'     (if \code{save_covariance_matrix == TRUE})\cr
+#'   E \tab embedding dimension\cr
+#'   tp \tab prediction horizon\cr
+#'   phi \tab length-scale parameter\cr
+#'   v_e \tab noise-variance parameter\cr
+#'   eta \tab signal-variance parameter\cr
+#'   fit_params \tab whether params were fitted or not\cr
+#'   num_pred \tab number of predictions\cr
+#'   rho \tab correlation coefficient between observations and predictions\cr
+#'   mae \tab mean absolute error\cr
+#'   rmse \tab root mean square error\cr
+#'   perc \tab percent correct sign\cr
+#'   p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
+#'   z-transformation\cr
+#' }
+#' If stats_only is FALSE or save_covariance_matrix is TRUE, then there is an 
+#' additional list-column variable:
+#' \tabular{ll}{
+#'   model_output \tab data.frame with columns for the time index, observations, 
+#'     and mean-value for predictions\cr
+#' }
+#' If save_covariance_matrix is TRUE, then there is an additional list-column variable:
+#' \tabular{ll}{
+#'   covariance_matrix \tab covariance matrix for predictions\cr
 #' }
 #' @examples 
 #' data("two_species_model")
 #' ts <- two_species_model$x[1:200]
 #' tde_gp(ts, lib = c(1, 100), pred = c(101, 200), E = 5)
-#' 
+#' @export
 tde_gp <- function(time_series, lib = c(1, NROW(time_series)), pred = lib, 
                    E = 1:10, tau = 1, tp = 1, 
                    phi = 0, v_e = 0, eta = 0, fit_params = TRUE, 
                    stats_only = TRUE, save_covariance_matrix = FALSE, 
                    silent = FALSE, ...)
 {
-    # setup lib and pred ranges
-    lib <- coerce_lib(lib, silent = silent)
-    pred <- coerce_lib(pred, silent = silent)
-
+    # restructure lib and pred if necessary
+    if(is.vector(lib))
+        lib <- matrix(lib, ncol = 2, byrow = TRUE)
+    if(is.vector(pred))
+        pred <- matrix(pred, ncol = 2, byrow = TRUE)
+    
     # setup data
     if (is.vector(time_series)) {
-        if (!is.null(names(time_series))) {
+        if(!is.null(names(time_series))) {
             time <- as.numeric(names(time_series))
-            if (any(is.na(time)))
+            if(any(is.na(time)))
                 time <- seq_along(time_series)
         } else {
             time <- seq_along(time_series)
         }
-    } else if ((is.matrix(time_series) || is.data.frame(time_series)) && 
-               NCOL(time_series) >= 2) {
-        time <- time_series[, 1]
-        time_series <- time_series[, 2]
+    } else if ((is.matrix(time_series) || is.data.frame(time_series)) && NCOL(time_series) >= 2) {
+        time <- time_series[,1]
+        time_series <- time_series[,2]
     }
-
+    n <- length(time_series)
+    
     params <- expand.grid(E = E, tau = tau)
     output <- do.call(rbind, lapply(1:NROW(params), function(i) {
         E <- params$E[i]
         tau <- params$tau[i]
         
         # make block
-        block <- make_block(block = data.frame(ts = time_series),
-                            t = time, max_lag = E, tau = tau,
-                            lib = lib, restrict_to_lib = FALSE)
+        block <- matrix(NA, nrow = n, ncol = E + 1)
+        block[, 1] <- time
+        block[, 2] <- time_series
+        if(E > 1)
+        {
+            for(lag in 2:E)
+            {
+                # add lag of previous lag
+                block[, lag + 1] <- c(rep.int(NA, tau), block[1:(n - tau), lag])
+                
+                # set NAs for beginning of lib sections
+                block[as.vector(outer(lib[, 1], 1:tau, "+"))-1, lag + 1] <- NA
+            }
+        }
 
         # pass along args to block_gp
         out_df <- block_gp(block, lib, pred, tp = tp, 
                            phi = phi, v_e = v_e, eta = eta, 
                            fit_params = fit_params, 
-                           columns = 1:E, target_column = 1, 
+                           columns = 1 + (1:E), target_column = 2, 
                            stats_only = stats_only, 
                            save_covariance_matrix = save_covariance_matrix, 
-                           first_column_time = TRUE, 
                            silent = TRUE, ...)
         
     }))

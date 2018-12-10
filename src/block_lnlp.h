@@ -31,8 +31,9 @@ public:
     void save_smap_coefficients();
     void run();
     DataFrame get_output();
-    DataFrame get_smap_coefficients();
-    List get_smap_coefficient_covariances();
+    List get_smap_coefficients();
+    DataFrame get_short_output();
+    List get_short_smap_coefficients();
     DataFrame get_stats();
     
 private:

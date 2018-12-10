@@ -148,58 +148,33 @@ void LNLP::run()
 
 DataFrame LNLP::get_output()
 {
-    std::vector<size_t> pred_idx = which_indices_true(pred_requested_indices);
-    vec short_time(pred_idx.size(), qnan);
-    vec short_obs(pred_idx.size(), qnan);
-    vec short_pred(pred_idx.size(), qnan);
-    vec short_pred_var(pred_idx.size(), qnan);
+    return DataFrame::create( Named("time") = target_time, 
+                              Named("obs") = targets, 
+                              Named("pred") = predicted, 
+                              Named("pred_var") = predicted_var);
+}
+
+List LNLP::get_smap_coefficients()
+{     
+    return(wrap(smap_coefficients));
+}
+
+DataFrame LNLP::get_short_output()
+{
+    vec short_time(which_pred.size(), qnan);
+    vec short_obs(which_pred.size(), qnan);
+    vec short_pred(which_pred.size(), qnan);
     
-    for(size_t i = 0; i < pred_idx.size(); ++i)
+    for(size_t i = 0; i < which_pred.size(); ++i)
     {
-        short_time[i] = target_time[pred_idx[i]];
-        short_obs[i] = targets[pred_idx[i]];
-        short_pred[i] = predicted[pred_idx[i]];
-        short_pred_var[i] = predicted_var[pred_idx[i]];
+        short_time[i] = target_time[which_pred[i]];
+        short_obs[i] = targets[which_pred[i]];
+        short_pred[i] = predicted[which_pred[i]];
     }
     
     return DataFrame::create( Named("time") = short_time, 
                               Named("obs") = short_obs, 
-                              Named("pred") = short_pred, 
-                              Named("pred_var") = short_pred_var);
-}
-
-DataFrame LNLP::get_smap_coefficients()
-{
-    std::vector<size_t> pred_idx = which_indices_true(pred_requested_indices);
-    size_t embed_dim = smap_coefficients.size();
-    List tmp_lst(embed_dim);
-    CharacterVector df_names(embed_dim);
-    vec temp_coeff;
-    for(size_t j = 0; j < embed_dim; ++j)
-    {
-        temp_coeff.assign(pred_idx.size(), qnan);
-        for(size_t i = 0; i < pred_idx.size(); ++i)
-        {
-            temp_coeff[i] = smap_coefficients[j][pred_idx[i]];
-        }
-        tmp_lst[j] = temp_coeff;
-        df_names[j] = "c_" + std::to_string(j+1);
-    }
-    df_names[embed_dim - 1] = "c_0";
-    DataFrame df(tmp_lst);
-    df.attr("names") = df_names;
-    return(df);
-}
-
-List LNLP::get_smap_coefficient_covariances()
-{
-    std::vector<size_t> pred_idx = which_indices_true(pred_requested_indices);
-    List tmp_lst(pred_idx.size());
-    for(size_t i = 0; i < pred_idx.size(); ++i)
-    {
-        tmp_lst[i] = smap_coefficient_covariances[pred_idx[i]];
-    }
-    return(tmp_lst);
+                              Named("pred") = short_pred);
 }
 
 DataFrame LNLP::get_stats()
@@ -237,7 +212,6 @@ void LNLP::prepare_forecast()
     {
         set_indices_from_range(lib_indices, lib_ranges, (E-1)*tau, -std::max(0, tp), true);
         set_indices_from_range(pred_indices, pred_ranges, (E-1)*tau, -std::max(0, tp), false);
-        set_pred_requested_indices_from_range(pred_requested_indices, pred_ranges);
 
         check_cross_validation();
 
@@ -313,7 +287,7 @@ RCPP_MODULE(lnlp_module)
     .method("run", &LNLP::run)
     .method("get_output", &LNLP::get_output)
     .method("get_smap_coefficients", &LNLP::get_smap_coefficients)
-    .method("get_smap_coefficient_covariances", &LNLP::get_smap_coefficient_covariances)
+    .method("get_short_output", &LNLP::get_short_output)
     .method("get_stats", &LNLP::get_stats)
     ;
 }
