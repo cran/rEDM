@@ -4,28 +4,25 @@
 \alias{block_lnlp}
 \title{Perform generalized forecasting using simplex projection or s-map}
 \usage{
-block_lnlp(block, lib = c(1, NROW(block)), pred = lib,
-  norm_type = c("L2 norm", "L1 norm", "P norm"), P = 0.5,
+block_lnlp(block, lib = c(1, NROW(block)), pred = lib, norm = 2,
   method = c("simplex", "s-map"), tp = 1,
   num_neighbors = switch(match.arg(method), simplex = "e+1", `s-map` =
   0), columns = NULL, target_column = 1, stats_only = TRUE,
   first_column_time = FALSE, exclusion_radius = NULL, epsilon = NULL,
-  theta = NULL, silent = FALSE, save_smap_coefficients = FALSE,
-  short_output = FALSE)
+  theta = NULL, silent = FALSE, save_smap_coefficients = FALSE)
 }
 \arguments{
 \item{block}{either a vector to be used as the time series, or a 
 data.frame or matrix where each column is a time series}
 
-\item{lib}{a 2-column matrix (or 2-element vector) where each row specifes the 
-first and last *rows* of the time series to use for attractor reconstruction}
+\item{lib}{a 2-column matrix (or 2-element vector) where each row specifies 
+the first and last *rows* of the time series to use for attractor 
+reconstruction}
 
 \item{pred}{(same format as lib), but specifying the sections of the time 
 series to forecast.}
 
-\item{norm_type}{the distance function to use. see 'Details'}
-
-\item{P}{the exponent for the P norm}
+\item{norm}{the distance measure to use. see 'Details'}
 
 \item{method}{the prediction method to use. see 'Details'}
 
@@ -61,66 +58,69 @@ method == "s-map")}
 \item{silent}{prevents warning messages from being printed to the R console}
 
 \item{save_smap_coefficients}{specifies whether to include the s_map 
-coefficients with the output (and forces the full output as if stats_only 
-were set to FALSE)}
-
-\item{short_output}{specifies whether to return a truncated output data.frame
-whose rows only include the predictions made and not the whole input block}
+coefficients with the output (and forces stats_only = FALSE, as well)}
 }
 \value{
-If stats_only, then a data.frame with components for the parameters 
-  and forecast statistics:
+A data.frame with components for the parameters and forecast 
+  statistics:
 \tabular{ll}{
-  cols \tab embedding\cr
-  tp \tab prediction horizon\cr
-  nn \tab number of neighbors\cr
-  num_pred \tab number of predictions\cr
-  rho \tab correlation coefficient between observations and predictions\cr
-  mae \tab mean absolute error\cr
-  rmse \tab root mean square error\cr
-  perc \tab percent correct sign\cr
-  p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-  z-transformation\cr
-  const_rho \tab same as rho, but for the constant predictor\cr
-  const_mae \tab same as mae, but for the constant predictor\cr
-  const_rmse \tab same as rmse, but for the constant predictor\cr
-  const_perc \tab same as perc, but for the constant predictor\cr
-  const_p_val \tab same as p_val, but for the constant predictor
+  \code{cols} \tab embedding\cr
+  \code{tp} \tab prediction horizon\cr
+  \code{nn} \tab number of neighbors\cr
+  \code{num_pred} \tab number of predictions\cr
+  \code{rho} \tab correlation coefficient between observations and 
+    predictions\cr
+  \code{mae} \tab mean absolute error\cr
+  \code{rmse} \tab root mean square error\cr
+  \code{perc} \tab percent correct sign\cr
+  \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+    Fisher's z-transformation\cr
+  \code{const_pred_rho} \tab same as \code{rho}, but for the constant predictor\cr
+  \code{const_pred_mae} \tab same as \code{mae}, but for the constant predictor\cr
+  \code{const_pred_rmse} \tab same as \code{rmse}, but for the constant predictor\cr
+  \code{const_pred_perc} \tab same as \code{perc}, but for the constant predictor\cr
+  \code{const_p_val} \tab same as \code{p_val}, but for the constant predictor\cr
+  \code{model_output} \tab data.frame with columns for the time index, 
+    observations, predictions, and estimated prediction variance
+    (if \code{stats_only == FALSE})\cr
 }
-Otherwise, a list where the number of elements is equal to the number of runs 
-  (unique parameter combinations). Each element is a list with the following 
-  components:
+If "s-map" is the method, then the same, but with additional columns:
 \tabular{ll}{
-  params \tab data.frame of parameters (embedding, tp, nn)\cr
-  
-  model_output \tab data.frame with columns for the time index, observations, 
-    and predictions\cr
-  stats \tab data.frame of forecast statistics\cr
+  \code{theta} \tab the nonlinear tuning parameter\cr
+  \code{smap_coefficients} \tab data.frame with columns for the s-map 
+  coefficients (if \code{save_smap_coefficients == TRUE})\cr
+  \code{smap_coefficient_covariances} \tab list of covariance matrices for 
+  the s-map coefficients (if \code{save_smap_coefficients == TRUE})\cr
 }
 }
 \description{
-\code{block_lnlp} uses multiple time series given as input to generate an 
-attractor reconstruction, and then applies the simplex projection or s-map 
-algorithm to make forecasts. This method generalizes the \code{simplex} and 
-\code{s-map} routines, and allows for "mixed" embeddings, where multiple time 
-series can be used as different dimensions of an attractor reconstruction.
+\code{\link{block_lnlp}} uses multiple time series given as input to generate 
+  an attractor reconstruction, and then applies the simplex projection or 
+  s-map algorithm to make forecasts. This method generalizes the 
+  \code{\link{simplex}} and \code{\link{s_map}} routines, and allows for 
+  "mixed" embeddings, where multiple time series can be used as different 
+  dimensions of an attractor reconstruction.
 }
 \details{
-The default parameters are set so that passing a vector as the only 
-argument will use that vector to predict itself one time step ahead. If a 
-matrix or data.frame is given as the only argument, the first column will be 
-predicted (one time step ahead), using the remaining columns as the embedding. 
-Rownames will be converted to numeric if possible to be used as the time 
-index, otherwise 1:NROW will be used instead. The default lib and pred are 
-for leave-one-out cross-validation over the whole time series, and returning 
-just the forecast statistics.
+The default parameters are set so that passing a vector as the only argument
+  will use that vector to predict itself one time step ahead. If a matrix or 
+  data.frame is given as the only argument, the first column will be 
+  predicted (one time step ahead), using the remaining columns as the 
+  embedding. Rownames will be converted to numeric if possible to be used as 
+  the time index, otherwise 1:NROW will be used instead. The default lib and 
+  pred are for leave-one-out cross-validation over the whole time series, 
+  and returning just the forecast statistics.
 
-norm_type "L2 norm" (default) uses the typical Euclidean distance:
-\deqn{distance(a,b) := \sqrt{\sum_i{(a_i - b_i)^2}}}{distance(a, b) := \sqrt(\sum(a_i - b_i)^2)}
-norm_type "L1 norm" uses the Manhattan distance:
-\deqn{distance(a,b) := \sum_i{|a_i - b_i|}}{distance(a, b) := \sum|a_i - b_i|}
-norm type "P norm" uses the P norm, generalizing the L1 and L2 norm to use $p$ as the exponent:
-\deqn{distance(a,b) := \sum_i{(a_i - b_i)^p}^{1/p}}{distance(a, b) := (\sum(a_i - b_i)^p)^(1/p)}
+\code{norm = 2} (default) uses the "L2 norm", Euclidean distance:
+  \deqn{distance(a,b) := \sqrt{\sum_i{(a_i - b_i)^2}}
+    }{distance(a, b) := \sqrt(\sum(a_i - b_i)^2)}
+\code{norm = 1} uses the "L1 norm", Manhattan distance:
+  \deqn{distance(a,b) := \sum_i{|a_i - b_i|}
+    }{distance(a, b) := \sum|a_i - b_i|}
+Other values generalize the L1 and L2 norm to use the given argument as the 
+  exponent, P, as:
+  \deqn{distance(a,b) := \sum_i{(a_i - b_i)^P}^{1/P}
+    }{distance(a, b) := (\sum(a_i - b_i)^P)^(1/P)}
 
 method "simplex" (default) uses the simplex projection forecasting algorithm
 
@@ -130,4 +130,5 @@ method "s-map" uses the s-map forecasting algorithm
 data("two_species_model")
 block <- two_species_model[1:200,]
 block_lnlp(block, columns = c("x", "y"), first_column_time = TRUE)
+
 }

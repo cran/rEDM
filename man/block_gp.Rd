@@ -2,7 +2,7 @@
 % Please edit documentation in R/block_GP.R
 \name{block_gp}
 \alias{block_gp}
-\title{Perform generalized forecasting using Gaussian processes}
+\title{(generalized) Block forecasting using Gaussian Processes}
 \usage{
 block_gp(block, lib = c(1, NROW(block)), pred = lib, tp = 1,
   phi = 0, v_e = 0, eta = 0, fit_params = TRUE, columns = NULL,
@@ -14,8 +14,9 @@ block_gp(block, lib = c(1, NROW(block)), pred = lib, tp = 1,
 \item{block}{either a vector to be used as the time series, or a 
 data.frame or matrix where each column is a time series}
 
-\item{lib}{a 2-column matrix (or 2-element vector) where each row specifes the 
-first and last *rows* of the time series to use for attractor reconstruction}
+\item{lib}{a 2-column matrix (or 2-element vector) where each row specifies 
+the first and last *rows* of the time series to use for attractor 
+reconstruction}
 
 \item{pred}{(same format as lib), but specifying the sections of the time 
 series to forecast.}
@@ -53,36 +54,33 @@ block is a time column (and therefore excluded when indexing)}
 If stats_only, then a data.frame with components for the parameters 
   and forecast statistics:
 \tabular{ll}{
-  embedding \tab embedding\cr
-  tp \tab prediction horizon\cr
-  phi \tab length-scale parameter\cr
-  v_e \tab noise-variance parameter\cr
-  eta \tab signal-variance parameter\cr
-  fit_params \tab whether params were fitted or not\cr
-  num_pred \tab number of predictions\cr
-  rho \tab correlation coefficient between observations and predictions\cr
-  mae \tab mean absolute error\cr
-  rmse \tab root mean square error\cr
-  perc \tab percent correct sign\cr
-  p_val \tab p-value that rho is significantly greater than 0 using Fisher's 
-  z-transformation\cr
-}
-If stats_only is FALSE or save_covariance_matrix is TRUE, then there is an 
-additional list-column variable:
-\tabular{ll}{
-  model_output \tab data.frame with columns for the time index, observations, 
-    and mean-value for predictions\cr
-}
-If save_covariance_matrix is TRUE, then there is an additional list-column variable:
-\tabular{ll}{
-  covariance_matrix \tab covariance matrix for predictions\cr
+  \code{embedding} \tab embedding\cr
+  \code{tp} \tab prediction horizon\cr
+  \code{phi} \tab length-scale parameter\cr
+  \code{v_e} \tab noise-variance parameter\cr
+  \code{eta} \tab signal-variance parameter\cr
+  \code{fit_params} \tab whether params were fitted or not\cr
+  \code{num_pred} \tab number of predictions\cr
+  \code{rho} \tab correlation coefficient between observations and 
+    predictions\cr
+  \code{mae} \tab mean absolute error\cr
+  \code{rmse} \tab root mean square error\cr
+  \code{perc} \tab percent correct sign\cr
+  \code{p_val} \tab p-value that rho is significantly greater than 0 using 
+    Fisher's z-transformation\cr
+  \code{model_output} \tab data.frame with columns for the time index, 
+    observations, mean-value for predictions, and independent variance for 
+    predictions (if \code{stats_only == FALSE} or 
+    \code{save_covariance_matrix == TRUE})\cr
+  \code{covariance_matrix} \tab the full covariance matrix for predictions 
+    (if \code{save_covariance_matrix == TRUE})\cr
 }
 }
 \description{
-\code{block_gp} uses multiple time series given as input to generate an 
+\code{\link{block_gp}} uses multiple time series given as input to generate an 
 attractor reconstruction, and then applies Gaussian process regression to 
 approximate the dynamics and make forecasts. This method is the 
-generalized version of \code{tde_gp}, which constructs the block from 
+generalized version of \code{\link{tde_gp}}, which constructs the block from 
 lags of a time series to pass into this function.
 }
 \details{
@@ -101,16 +99,20 @@ will be tried. If fit_params is also set to TRUE, these values will be the
 initial values for subsequent optimization of likelihood.
 
 The basic model is:
-  \deqn{y = f(x) + noise}
+  \deqn{y = f(x) + \textnormal{noise}
+  }{y = f(x) + noise}
 in which the function f(x) is modeled using a Gaussian process prior:
-  \deqn{f ~ GP(0, C)}
+  \deqn{f \sim \textnormal{GP}(0, C)
+}{f ~ GP(0, C)}
 with mean = 0,
 and covariance function, C, which is given by the squared-exponential kernel:
-  \deqn{C_{ij} = eta * exp(-phi^2 * ||x_i - x_j||^2)}
+  \deqn{C_{ij} = eta * \exp(-phi^2 * ||x_i - x_j||^2)
+}{C_{ij} = eta * exp(-phi^2 * ||x_i - x_j||^2)}
 
 y is a realization from process f with normally-distributed i.i.d. process 
 noise,
-  \deqn{noise ~ N(0, v_e)}
+  \deqn{noise \sim \mathcal(N)(0, v_e)
+  }{noise ~ N(0, v_e)}
 such that the covariance of observations y_i and y_j is
   \deqn{K_{ij} = C_{ij} + v_e * \delta_{ij}}
 where \eqn{\delta_{ij}} is the kronecker delta (i.e. it is 1 if \eqn{i = j} 
@@ -120,35 +122,40 @@ From the model definition, the variance in y, after marginalizing over f, is
 given by eta + v_e. Thus to simplify specification of priors for the 
 hyperparameters eta and v_e, the outputs y are normalized to zero mean and 
 unit variance prior to fitting. This allows us to set (0, 1) bounds on 
-eta and v_e which facilitates parameter estimation.  We set Beta(2, 2) priors 
-for both eta and v_e to partition prior uncertainty equally across 
+eta and v_e which facilitates parameter estimation.  We set Beta(2, 2) 
+priors for both eta and v_e to partition prior uncertainty equally across 
 structural and process uncertainty.
 
 For a scalar input, the length-scale parameter phi controls the expected 
 number of zero crossings on the unit interval as 
-  \deqn{E(crossings) = \frac{\sqrt(2)}{\pi} \phi \approx 0.45 \phi}
+  \deqn{E(crossings) = \frac{\sqrt(2)}{\pi} \phi \approx 0.45 \phi
+  }{E(crossings) = \sqrt(2)/\pi \phi \approx 0.45 \phi}
 
-Thus to facilitate interpretation and prior specification, the distances in C 
-are scaled by the max distance so that a model with \eqn{\phi = 2} would have 
-roughly one zero crossing over the range of the data.  We assign phi a 
-half-Normal prior with variance \eqn{\pi / 2} so that the prior mean phi is 1 
-which tends to avoid overfitting. 
-To fit the GP we estimate eta, v_e, and phi by maximizing the posterior after 
+Thus to facilitate interpretation and prior specification, the distances in 
+C are scaled by the max distance so that a model with \eqn{\phi = 2} would 
+have roughly one zero crossing over the range of the data.  We assign phi a 
+half-Normal prior with variance \eqn{\pi / 2} so that the prior mean phi is 
+1, which tends to avoid overfitting. 
+To fit the GP we estimate eta, v_e, and phi by maximizing the posterior after
 marginalizing over f(x). This is given by the multivariate normal likelihood 
-  \deqn{logL = -1/2 \log{|K_d|}^{-1/2} y_d^T [K_d]^{-1} y_d}
-where \eqn{K_d} is the matrix obtained by evaluating the covariance function at all 
-pairs of inputs and \eqn{y_d} is the column vector of outputs. 
+  \deqn{logL = -1/2 \log{|K_d|}^{-1/2} y_d^T [K_d]^{-1} y_d
+}{logL = -1/2 log(|K_d|)^(-1/2) y_d^T [K_d]^(-1) y_d}
+where \eqn{K_d} is the matrix obtained by evaluating the covariance function 
+at all pairs of inputs and \eqn{y_d} is the column vector of outputs. 
 Predictions for new values of x are obtained by setting eta, v_e, and phi to 
 the Maximum a Posteriori (MAP) estimates and using the GP conditional on the 
 observed data.  Specifically, given \eqn{x_d} and \eqn{y_d}, 
 the mean and variance for y evaluated at a new value of x are
-  \deqn{E(y) = C(x, x_d) [K_d]^(-1) y_d}
-  \deqn{V(y) = eta + v_e - C(x, x_d)[K_d]^{-1} C(x_d, x)}
-where the vector \eqn{C(x, x_d)} is obtained by evaluating C at x and each of the observed inputs 
-while holding eta, phi, and v_e at the MAP estimates.
+  \deqn{E(y) = C(x, x_d) [K_d]^{-1} y_d
+  }{E(y) = C(x, x_d) [K_d]^(-1) y_d}
+  \deqn{V(y) = eta + v_e - C(x, x_d)[K_d]^{-1} C(x_d, x)
+  }{V(y) = eta + v_e - C(x, x_d)[K_d]^(-1) C(x_d, x)}
+where the vector \eqn{C(x, x_d)} is obtained by evaluating C at x and each 
+of the observed inputs while holding eta, phi, and v_e at the MAP estimates.
 }
 \examples{
 data("two_species_model")
 block <- two_species_model[1:200,]
 block_gp(block, columns = c("x", "y"), first_column_time = TRUE)
+
 }

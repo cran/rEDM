@@ -28,21 +28,16 @@ void BlockLNLP::set_block(const NumericMatrix new_block)
     return;
 }
 
-void BlockLNLP::set_norm_type(const int norm_type)
+void BlockLNLP::set_norm(const double norm)
 {
-    switch(norm_type)
+    if(norm == 1)
     {
-        case 1:
-            norm_mode = L1_NORM;
-            break;
-        case 2:
-            norm_mode = L2_NORM;
-            break;
-        case 3:
-            norm_mode = P_NORM;
-            break;
-        default:
-            throw(std::domain_error("unknown norm type selected"));
+        norm_mode = L1_NORM;
+    } else if (norm == 2) {
+        norm_mode = L2_NORM;
+    } else {
+        norm_mode = P_NORM;
+        p = norm;
     }
     return;
 }
@@ -139,12 +134,6 @@ void BlockLNLP::set_theta(const double new_theta)
     return;
 }
 
-void BlockLNLP::set_p(const double new_p)
-{
-    p = new_p;
-    return;
-}
-
 void BlockLNLP::suppress_warnings()
 {
     SUPPRESS_WARNINGS = true;
@@ -166,30 +155,18 @@ void BlockLNLP::run()
 
 DataFrame BlockLNLP::get_output()
 {
-    return DataFrame::create( Named("time") = target_time, 
-                              Named("obs") = targets, 
-                              Named("pred") = predicted, 
-                              Named("pred_var") = predicted_var);
-}
-
-List BlockLNLP::get_smap_coefficients()
-{     
-    return(wrap(smap_coefficients));
-}
-
-DataFrame BlockLNLP::get_short_output()
-{
-    vec short_time(which_pred.size(), qnan);
-    vec short_obs(which_pred.size(), qnan);
-    vec short_pred(which_pred.size(), qnan);
-    vec short_pred_var(which_pred.size(), qnan);
+    std::vector<size_t> pred_idx = which_indices_true(pred_requested_indices);
+    vec short_time(pred_idx.size(), qnan);
+    vec short_obs(pred_idx.size(), qnan);
+    vec short_pred(pred_idx.size(), qnan);
+    vec short_pred_var(pred_idx.size(), qnan);
     
-    for(size_t i = 0; i < which_pred.size(); ++i)
+    for(size_t i = 0; i < pred_idx.size(); ++i)
     {
-        short_time[i] = target_time[which_pred[i]];
-        short_obs[i] = targets[which_pred[i]];
-        short_pred[i] = predicted[which_pred[i]];
-        short_pred_var[i] = predicted_var[which_pred[i]];
+        short_time[i] = target_time[pred_idx[i]];
+        short_obs[i] = targets[pred_idx[i]];
+        short_pred[i] = predicted[pred_idx[i]];
+        short_pred_var[i] = predicted_var[pred_idx[i]];
     }
     
     return DataFrame::create( Named("time") = short_time, 
@@ -198,14 +175,38 @@ DataFrame BlockLNLP::get_short_output()
                               Named("pred_var") = short_pred_var);
 }
 
-List BlockLNLP::get_short_smap_coefficients()
+DataFrame BlockLNLP::get_smap_coefficients()
 {
-    std::vector<vec> short_smap_coefficients;
-    for(auto curr_pred: which_pred)
+    std::vector<size_t> pred_idx = which_indices_true(pred_requested_indices);
+    size_t embed_dim = smap_coefficients.size();
+    List tmp_lst(embed_dim);
+    CharacterVector df_names(embed_dim);
+    vec temp_coeff;
+    for(size_t j = 0; j < embed_dim; ++j)
     {
-        short_smap_coefficients.push_back(smap_coefficients[curr_pred]);
+        temp_coeff.assign(pred_idx.size(), qnan);
+        for(size_t i = 0; i < pred_idx.size(); ++i)
+        {
+            temp_coeff[i] = smap_coefficients[j][pred_idx[i]];
+        }
+        tmp_lst[j] = temp_coeff;
+        df_names[j] = "c_" + std::to_string(j+1);
     }
-    return(wrap(short_smap_coefficients));
+    df_names[embed_dim - 1] = "c_0";
+    DataFrame df(tmp_lst);
+    df.attr("names") = df_names;
+    return(df);
+}
+
+List BlockLNLP::get_smap_coefficient_covariances()
+{
+    std::vector<size_t> pred_idx = which_indices_true(pred_requested_indices);
+    List tmp_lst(pred_idx.size());
+    for(size_t i = 0; i < pred_idx.size(); ++i)
+    {
+        tmp_lst[i] = smap_coefficient_covariances[pred_idx[i]];
+    }
+    return(tmp_lst);
 }
 
 DataFrame BlockLNLP::get_stats()
@@ -243,12 +244,13 @@ void BlockLNLP::prepare_forecast()
     {
         set_indices_from_range(lib_indices, lib_ranges, 0, -std::max(0, tp), true);
         set_indices_from_range(pred_indices, pred_ranges, 0, -std::max(0, tp), false);
+        set_pred_requested_indices_from_range(pred_requested_indices, pred_ranges);
 
         check_cross_validation();
 
         which_lib = which_indices_true(lib_indices);
         which_pred = which_indices_true(pred_indices);
-        
+
         remake_ranges = false;
     }
     
@@ -309,7 +311,7 @@ RCPP_MODULE(block_lnlp_module)
 
     .method("set_time", &BlockLNLP::set_time)
     .method("set_block", &BlockLNLP::set_block)
-    .method("set_norm_type", &BlockLNLP::set_norm_type)
+    .method("set_norm", &BlockLNLP::set_norm)
     .method("set_pred_type", &BlockLNLP::set_pred_type)
     .method("set_lib", &BlockLNLP::set_lib)
     .method("set_pred", &BlockLNLP::set_pred)
@@ -319,14 +321,12 @@ RCPP_MODULE(block_lnlp_module)
     .method("set_target_column", &BlockLNLP::set_target_column)
     .method("set_params", &BlockLNLP::set_params)
     .method("set_theta", &BlockLNLP::set_theta)
-    .method("set_p", &BlockLNLP::set_p)
     .method("suppress_warnings", &BlockLNLP::suppress_warnings)
     .method("save_smap_coefficients", &BlockLNLP::save_smap_coefficients)
     .method("run", &BlockLNLP::run)
     .method("get_output", &BlockLNLP::get_output)
     .method("get_smap_coefficients", &BlockLNLP::get_smap_coefficients)
-    .method("get_short_output", &BlockLNLP::get_short_output)
-    .method("get_short_smap_coefficients", &BlockLNLP::get_short_smap_coefficients)
+    .method("get_smap_coefficient_covariances", &BlockLNLP::get_smap_coefficient_covariances)
     .method("get_stats", &BlockLNLP::get_stats)
     ;
 }

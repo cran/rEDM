@@ -16,7 +16,7 @@ public:
     // *** methods *** //
     void set_time(const NumericVector time);
     void set_block(const NumericMatrix new_block);
-    void set_norm_type(const int norm_type);
+    void set_norm(const double norm);
     void set_pred_type(const int pred_type);
     void set_lib(const NumericMatrix lib);
     void set_pred(const NumericMatrix pred);
@@ -26,14 +26,12 @@ public:
     void set_target_column(const size_t new_target);
     void set_params(const int new_tp, const size_t new_nn);
     void set_theta(const double new_theta);
-    void set_p(const double new_p);
     void suppress_warnings();
     void save_smap_coefficients();
     void run();
     DataFrame get_output();
-    List get_smap_coefficients();
-    DataFrame get_short_output();
-    List get_short_smap_coefficients();
+    DataFrame get_smap_coefficients();
+    List get_smap_coefficient_covariances();
     DataFrame get_stats();
     
 private:

@@ -5,6 +5,7 @@ const double ForecastMachine::qnan = std::numeric_limits<double>::quiet_NaN();
 
 ForecastMachine::ForecastMachine():
 lib_indices(std::vector<bool>()), pred_indices(std::vector<bool>()),
+pred_requested_indices(std::vector<bool>()), 
 which_lib(std::vector<size_t>()), which_pred(std::vector<size_t>()),
 time(vec()), data_vectors(std::vector<vec>()), smap_coefficients(std::vector<vec>()),
 targets(vec()), predicted(vec()), predicted_var(vec()),
@@ -185,12 +186,18 @@ std::vector<size_t> ForecastMachine::find_nearest_neighbors(const vec& dist)
     else
     {
         size_t i;
-        nearest_neighbors.push_back(which_lib[0]);
         for(auto curr_lib: which_lib)
         {
+            // distance to current neighbor under examination
             curr_distance = dist[curr_lib];
-            if(curr_distance <= dist[nearest_neighbors.back()])
+            
+            // We want to include the current neighbor:
+            //   if haven't populated neighbors vector, or
+            //   if current neighbor is nearer than farthest away neighbor
+            if(nearest_neighbors.size() < nn || 
+               curr_distance <= dist[nearest_neighbors.back()])
             {
+                // find the correct place to insert the current neighbor
                 i = nearest_neighbors.size();
                 while((i > 0) && (curr_distance < dist[nearest_neighbors[i-1]]))
                 {
@@ -198,7 +205,9 @@ std::vector<size_t> ForecastMachine::find_nearest_neighbors(const vec& dist)
                 }
                 nearest_neighbors.insert(nearest_neighbors.begin()+i, curr_lib);
 
-                if((nearest_neighbors.size() > nn) &&
+                // if we've added too many neighbors and there isn't a tie, then
+                // pop off the farthest neighbor
+                while((nearest_neighbors.size() > nn) &&
                    (dist[nearest_neighbors[nn-1]] < dist[nearest_neighbors.back()]))
                 {
                     nearest_neighbors.pop_back();
@@ -301,6 +310,47 @@ void ForecastMachine::set_indices_from_range(std::vector<bool>& indices, const s
 	return;
 }
 
+void ForecastMachine::set_pred_requested_indices_from_range(std::vector<bool>& indices, 
+                                             const std::vector<time_range> range)
+{
+    size_t start_of_range, end_of_range;
+    indices.assign(num_vectors, false); // initialize indices
+    for(auto& range_iter: range)
+    {
+        start_of_range = range_iter.first;
+        if(start_of_range >= num_vectors) // check start of range
+        {
+            std::ostringstream temp;
+            temp << "start_of_range = ";
+            temp << start_of_range + 1;
+            temp << ", but num_vectors = ";
+            temp << num_vectors;
+            std::string temp_str = temp.str();
+            LOG_WARNING(temp_str.c_str());
+            LOG_WARNING("start of time_range was greater than the number of vectors; skipping");
+            continue;
+        }
+        
+        end_of_range = range_iter.second;
+        if(end_of_range >= num_vectors) // check end of range
+        {
+            std::ostringstream temp;
+            temp << "end_of_range = ";
+            temp << end_of_range + 1;
+            temp << ", but num_vectors = ";
+            temp << num_vectors;
+            std::string temp_str = temp.str();
+            LOG_WARNING(temp_str.c_str());
+            LOG_WARNING("end of time_range was greater than the number of vectors; corrected");
+            end_of_range = num_vectors-1;
+        }
+        for(size_t j = start_of_range; j <= end_of_range; ++j)
+        {
+            indices[j] = true;
+        }
+    }
+    return;
+}
 void ForecastMachine::check_cross_validation()
 {
     if (exclusion_radius >= 0) // if exclusion_radius is set, always do cross_validation
@@ -420,7 +470,9 @@ void ForecastMachine::smap_forecast()
     */
     if(SAVE_SMAP_COEFFICIENTS)
     {
-        smap_coefficients.assign(num_vectors, vec(data_vectors[0].size()+1, qnan));
+        List tmp(num_vectors);
+        smap_coefficient_covariances = tmp;
+        smap_coefficients.assign(data_vectors[0].size()+1, vec(num_vectors, qnan));
     }
     smap_prediction(0, which_pred.size());
     const_prediction(0, which_pred.size());
@@ -447,14 +499,13 @@ void ForecastMachine::simplex_prediction(const size_t start, const size_t end)
             temp_lib = which_lib;
             adjust_lib(curr_pred);
             nearest_neighbors = find_nearest_neighbors(distances[curr_pred]);
-            which_lib = temp_lib;
+            which_lib.swap(temp_lib);
         }
         else
         {
             nearest_neighbors = find_nearest_neighbors(distances[curr_pred]);
         }
         effective_nn = nearest_neighbors.size();
-        
         if(effective_nn == 0)
         {
             predicted[curr_pred] = qnan;
@@ -483,7 +534,7 @@ void ForecastMachine::simplex_prediction(const size_t start, const size_t end)
                                   min_weight);
             }
         }
-        
+
         // identify ties and adjust weights
         if(effective_nn > nn) // ties exist
         {
@@ -492,16 +543,30 @@ void ForecastMachine::simplex_prediction(const size_t start, const size_t end)
             // count ties
             num_ties = 0;
             for(auto& neighbor_index: nearest_neighbors)
+            {
                 if(distances[curr_pred][neighbor_index] == tie_distance)
                     num_ties++;
+            }
                 
-                tie_adj_factor = double(num_ties + nn - effective_nn) / double(num_ties);
+            tie_adj_factor = double(num_ties + nn - effective_nn) / double(num_ties);
                 
-                // adjust weights
-                for(size_t k = 0; k < nearest_neighbors.size(); ++k)
-                    if(distances[curr_pred][nearest_neighbors[k]] == tie_distance)
-                        weights[k] *= tie_adj_factor;
+            // adjust weights
+            for(size_t k = 0; k < nearest_neighbors.size(); ++k)
+            {
+                if(distances[curr_pred][nearest_neighbors[k]] == tie_distance)
+                    weights[k] *= tie_adj_factor;
+            }
         }
+        
+        /* check info on neighbors
+        for(size_t k = 0; k < effective_nn; ++k)
+        {
+            std::cerr << "neighbor " << k+1 << ": " << "\n";
+            std::cerr << "  distance = " << distances[curr_pred][nearest_neighbors[k]] << "\n";
+            std::cerr << "  weight   = " << weights[k] << "\n";
+            std::cerr << "  target   = " << targets[nearest_neighbors[k]] << "\n";
+        }
+        */
         
         // make prediction
         total_weight = accumulate(weights.begin(), weights.end(), 0.0);
@@ -515,6 +580,8 @@ void ForecastMachine::simplex_prediction(const size_t start, const size_t end)
         for(size_t k = 0; k < effective_nn; ++k)
             predicted_var[curr_pred] += weights[k] * pow(targets[nearest_neighbors[k]] - predicted[curr_pred], 2);
         predicted_var[curr_pred] = predicted_var[curr_pred] / total_weight;
+//        if(predicted_var[curr_pred] == 0)
+//            LOG_WARNING("Zero prediction uncertainty.");
     }
     return;
 }
@@ -540,7 +607,7 @@ void ForecastMachine::smap_prediction(const size_t start, const size_t end)
             temp_lib = which_lib;
             adjust_lib(curr_pred);
             nearest_neighbors = find_nearest_neighbors(distances[curr_pred]);
-            which_lib = temp_lib;
+            which_lib.swap(temp_lib);
         }
         else
         {
@@ -554,8 +621,7 @@ void ForecastMachine::smap_prediction(const size_t start, const size_t end)
             LOG_WARNING("no nearest neighbors found; using NA for forecast");
             continue;
         }
-        weights = Eigen::VectorXd::Constant(effective_nn, 1.0);
-        //        weights.assign(effective_nn, 1.0); // default is for theta = 0
+        weights = Eigen::VectorXd::Constant(effective_nn, 1.0); // default is for theta = 0
         if(theta > 0.0)
         {
             // compute average distance
@@ -607,30 +673,34 @@ void ForecastMachine::smap_prediction(const size_t start, const size_t end)
         if(SAVE_SMAP_COEFFICIENTS)
         {
             for(size_t j = 0; j <= E; ++j)
-                smap_coefficients[curr_pred][j] = x(j);
+                smap_coefficients[j][curr_pred] = x(j);
+            
+            // compute covariance matrix for coefficients
+            MatrixXd H = svd.matrixV() * S_inv * svd.matrixU().transpose() * weights.asDiagonal();
+            
+            VectorXd w_resid = B - A * x;
+            double total_w = 0;
+            for(size_t i = 0; i < effective_nn; ++i)
+            {
+                total_w += weights(i) * weights(i);
+            }
+            double sigma_squared = w_resid.dot(w_resid) / total_w;
+            smap_coefficient_covariances[curr_pred] = sigma_squared * H * H.transpose();
         }
         // save prediction
         predicted[curr_pred] = pred;
         
-        // compute variance of prediction through residuals of fitted s-map model
-        /*
-        VectorXd w_resid = B - A * x;
-        double total_w = 0;
-        for(size_t i = 0; i < effective_nn; ++i)
-        {
-            total_w += weights(i) * weights(i);
-        }
-        predicted_var[curr_pred] = w_resid.dot(w_resid) / total_w;
-        */
         // compute variance of prediction (using same approach as simplex)
         predicted_var[curr_pred] = 0;
         double total_weight = 0;
         for(size_t k = 0; k < effective_nn; ++k)
         {
             total_weight += weights(k);
-            predicted_var[curr_pred] += weights[k] * pow(targets[nearest_neighbors[k]] - predicted[curr_pred], 2);
+            predicted_var[curr_pred] += weights(k) * pow(targets[nearest_neighbors[k]] - predicted[curr_pred], 2);
         }
         predicted_var[curr_pred] = predicted_var[curr_pred] / total_weight;
+//        if(predicted_var[curr_pred] == 0)
+//            LOG_WARNING("Zero prediction uncertainty.");
     }
     return;
 }
@@ -685,14 +755,16 @@ std::vector<size_t> sort_indices(const vec& v, std::vector<size_t> idx)
 
 PredStats compute_stats_internal(const vec& obs, const vec& pred)
 {
+    // Obtain environment containing function
+    Rcpp::Environment base("package:stats"); 
+    
+    // Make function callable from C++
+    Rcpp::Function cor_r = base["cor"];
+    
+    
     size_t num_pred = 0;
     double sum_errors = 0;
     double sum_squared_errors = 0;
-    double sum_obs = 0;
-    double sum_pred = 0;
-    double sum_squared_obs = 0;
-    double sum_squared_pred = 0;
-    double sum_prod = 0;
     size_t same_sign = 0;
     size_t num_vectors = obs.size();
     if(pred.size() < num_vectors)
@@ -705,11 +777,6 @@ PredStats compute_stats_internal(const vec& obs, const vec& pred)
             ++ num_pred;
             sum_errors += fabs(obs[k] - pred[k]);
             sum_squared_errors += (obs[k] - pred[k]) * (obs[k] - pred[k]);
-            sum_obs += obs[k];
-            sum_pred += pred[k];
-            sum_squared_obs += obs[k] * obs[k];
-            sum_squared_pred += pred[k] * pred[k];
-            sum_prod += obs[k] * pred[k];
             if((obs[k] >= 0 && pred[k] >= 0) ||
                (obs[k] <= 0 && pred[k] <= 0))
                 ++ same_sign;
@@ -718,9 +785,8 @@ PredStats compute_stats_internal(const vec& obs, const vec& pred)
     
     PredStats output;
     output.num_pred = num_pred;
-    output.rho = (sum_prod * num_pred - sum_obs * sum_pred) /
-        sqrt((sum_squared_obs * num_pred - sum_obs * sum_obs) *
-            (sum_squared_pred * num_pred - sum_pred * sum_pred));
+    Rcpp::NumericVector cor_output = cor_r(obs, pred, "pairwise");
+    output.rho = cor_output[0];
     output.mae = sum_errors / double(num_pred);
     output.rmse = sqrt(sum_squared_errors / double(num_pred));
     output.perc = double(same_sign) / double(num_pred);
