@@ -14,10 +14,11 @@
 
 #include "Common.h"
 
-// Since #include DataFrame.h is in Common.h, need forward declaration
-extern std::vector<std::string> SplitString( std::string inString, 
-                                             std::string delimeters = "," );
-extern bool OnlyDigits( std::string str, bool integerOnly );
+// Since #include DataFrame.h is in Common.h, need forward declarations
+bool OnlyDigits( std::string str, bool integerOnly );
+
+std::vector<std::string> SplitString( std::string inString, 
+                                      std::string delimeters = "," );
 
 // Type definition for CSV NamedData to pair column names & column data
 typedef std::vector<std::pair<std::string, std::vector<double>>> NamedData;
@@ -62,7 +63,9 @@ public:
     //-----------------------------------------------------------------
     // Constructors
     //-----------------------------------------------------------------
-    DataFrame() {}
+    DataFrame(): 
+        n_rows( 0 ), n_columns( 0 ), elements( 0 ),
+        maxRowPrint( 10 ), noTime( false ), partialDataRowsDeleted( false ) {}
     
     //-----------------------------------------------------------------
     // Load data from CSV file path/fileName, populate DataFrame
@@ -79,7 +82,7 @@ public:
     //-----------------------------------------------------------------
     DataFrame( size_t rows, size_t columns ):
         n_rows( rows ), n_columns( columns ), elements( columns * rows ),
-        maxRowPrint( 10 ), partialDataRowsDeleted( false ) {}
+        maxRowPrint( 10 ), noTime( false ), partialDataRowsDeleted( false ) {}
     
     //-----------------------------------------------------------------
     // Empty DataFrame of size (rows, columns) with column names in a
@@ -88,7 +91,7 @@ public:
     DataFrame( size_t rows, size_t columns, std::string colNames ):
         n_rows( rows ), n_columns( columns ), elements( columns * rows ),
         columnNames( std::vector<std::string>(columns) ), maxRowPrint( 10 ),
-        partialDataRowsDeleted( false )
+        noTime( false ), partialDataRowsDeleted( false )
     {
         BuildColumnNameIndex( colNames );
     }
@@ -101,7 +104,7 @@ public:
                std::vector< std::string > columnNames ):
         n_rows( rows ), n_columns( columns ), elements( columns * rows ),
         columnNames( columnNames ), maxRowPrint( 10 ),
-        partialDataRowsDeleted( false ) 
+        noTime( false ), partialDataRowsDeleted( false ) 
     {
         BuildColumnNameIndex();
     }

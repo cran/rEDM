@@ -1,4 +1,4 @@
-280295b28714ebaf96552c7460963e18 *DESCRIPTION
+c287c6e76f61c131d2fb7d27bb371077 *DESCRIPTION
 d5e0272bcd6a4e1cb025a326b8a2558e *LICENSE
 ba60eb160fee86565767803da429ab9b *NAMESPACE
 c910d11c5346a76e07792f72cdac64df *NEWS
@@ -8,7 +8,7 @@ afd5acc26db2aab864d12b847f9796f4 *R/Examples.R
 67d7e566272d6c6f6cc5e303c496f9cc *R/LegacyInterface.R
 80aff3f94b06a636235493473f8d1c8c *R/zzz.R
 df3d596ef5a838fb72f38a4503fceced *README.md
-96fc56275f68ea7e9276ff0b81a1b9b5 *build/vignette.rds
+8353bb0126880f5af57e276ca113099d *build/vignette.rds
 baf12ba201aa4c952bf86467a651f398 *data/EvergladesFlow.RData
 9d9964b25c63638decb9332b1bdc13c2 *data/Lorenz5D.RData
 bb66ab4f3adcfded3c846ff864a88a78 *data/TentMap.RData
@@ -54,7 +54,7 @@ b723aa36e3dfc9b786856801c3f9a960 *man/multiview_legacy.Rd
 2f085caa68ac0b3e021664991e0d14f3 *man/simplex_legacy.Rd
 bfd1f6e7be686962ae939d264fb6b8ad *src/CCM.cpp
 6c83d7f34f2ffc102d381d92817a3160 *src/ComputeError.cpp
-2a639294a4ed04045bedf74891422fb0 *src/DataFrame.cpp
+de06f83efec1731f243bc251fc2df1c9 *src/DataFrame.cpp
 462ddca21fc2f06e23fdba0e2de83023 *src/Embed.cpp
 c3796c587f4ff4c4898eb46784c3bef5 *src/EmbedDim.cpp
 0202e8d0198b0c89e8790355e5018482 *src/Makevars
@@ -72,8 +72,8 @@ dff88cfe967fecc193acb7643d1bc2df *src/Simplex.cpp
 5b5a6dc208da3f411243523784750c20 *src/cppEDM/src/AuxFunc.h
 fb26e8f240e7397421f765a8128497cf *src/cppEDM/src/CCM.cc
 5e38bf6b1a6555550ac46e69ee5af976 *src/cppEDM/src/Common.cc
-61b49ab9ab484998749432e3015c910d *src/cppEDM/src/Common.h
-1e8064d91d23c899a9ad0b721a1bca1a *src/cppEDM/src/DataFrame.h
+596467aa6bea891eec0ed0cd58f685d6 *src/cppEDM/src/Common.h
+4c13f38a60b0e3d0a1c5cfc77eef4df2 *src/cppEDM/src/DataFrame.h
 d3dd6d28e437c366b180f22dd9e0eca2 *src/cppEDM/src/DateTime.h
 c21853bb9b0e48247326f6ba43d921b3 *src/cppEDM/src/DateTimeUtil.cc
 e98388fa327a5cde7c8827b82d2cc74f *src/cppEDM/src/Embed.cc
@@ -88,7 +88,7 @@ fa9b7fbae855193806536beacb1dd70b *src/cppEDM/src/Parameter.cc
 a8f4eb652dc60eff9b96bfa7fb5929b6 *src/cppEDM/src/SMap.cc
 09f1cb5311d7a977d1398a938a206d63 *src/cppEDM/src/Simplex.cc
 46ed1ac9ca0633459c866e4f5d9857ca *src/cppEDM/src/Version.h
-663a4faa61494e9cd87b6bca1130d95c *src/cppEDM/src/makefile
+40cbe636e5a7fd6b7ddc2123f03e9fa0 *src/cppEDM/src/makefile
 8bf4b478089f9913756e32fc73e98343 *src/cppEDM/src/makefile.mingw
 be92f9e30d214a8afe94cd40fe5f8501 *src/cppEDM/src/makefile.windows
 fb6371ad0c8f1ba619dbfed6187b93ce *vignettes/CrossMap.png
@@ -102,4 +102,4 @@ cf86c228622a392e08bd5765962859af *vignettes/References.bib
 e943a9ac2cb659c57662e8842827a636 *vignettes/rEDM-algorithms.ltx
 ab9ab2c5102d0a4233865c9032519fe4 *vignettes/rEDM-algorithms.pdf
 9b2a4e0e33032053fce6336bd5f8a264 *vignettes/rEDM-tutorial.Rmd
-5ffb343581ca7c8633246d0773ad2fb0 *vignettes/rEDM-tutorial.html
+0748e5d9d1eb5f27be88e0f08f0d7ec6 *vignettes/rEDM-tutorial.html
