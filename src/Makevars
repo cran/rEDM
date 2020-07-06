@@ -1,4 +1,3 @@
-
 LIB_PATH        = ./cppEDM/lib/
 CPPEDM_SRC_PATH = ./cppEDM/src/
 LIBEDM          = $(LIB_PATH)/libEDM.a
@@ -13,6 +12,7 @@ all : $(SHLIB)
 
 $(SHLIB): $(LIBEDM)
 
+## Pass R compiler variables CXX11... to cppEDM makefile
 $(LIBEDM):
 	@(cd $(CPPEDM_SRC_PATH) && $(MAKE) clean && $(MAKE) \
 	CXX="$(CXX11) $(CXX11STD)" CXXFLAGS="$(CXX11FLAGS) $(CXX11PICFLAGS)" \
