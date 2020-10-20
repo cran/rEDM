@@ -207,7 +207,23 @@ void EDM::FindNeighbors() {
         //     to nan, which translate to "quiet nan".  Following PEP 20,
         //     generate WARNING if parameters.knn neighbors are not found.
         std::valarray< double > knnDistances( nanf("knn"), parameters.knn );
-        std::valarray< size_t > knnLibRows  ( nanl("knn"), parameters.knn );
+
+        // JP: Wow. To satisfy the R clang-UBSAN, we cannot initialise
+        //     knnLibRows size_t with nanl(), it complains:
+        //     "nan is outside the range of representable values of type
+        //     'const unsigned long'"  --- Ooookay.
+        //     Sooo... let's roll the dice that init with 0 causes no
+        //     problems since we use knnDistances to select rows.
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        //     This breaks code conformity between cppEDM : pyEDM : rEDM
+        //     with potential to defeat the purpose of a unified engine. 
+        // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#ifdef USING_R
+        size_t knnLibRowInit = 0;
+        std::valarray< size_t > knnLibRows( knnLibRowInit, parameters.knn );
+#else
+        std::valarray< size_t > knnLibRows( nanl("knn"), parameters.knn );
+#endif
 
         int lib_row_i = 0;
         int k         = 0;
@@ -310,6 +326,17 @@ void EDM::FindNeighbors() {
 //               distance(i,j) is distance between the E-dimensional
 //               phase space point prediction row i and library row j.
 // allLibRows  : 1 row x lib cols matrix with lib rows
+//
+// JP Note: All prediction x library distances are computed.
+//          This is not optimal since some values are degenerate.
+//          Ideally, degenerate values are computed once, then copied.
+//          This should be addressed.  However, it's sticky since the
+//          allDistances matrix is indexed from [0:Npred] rows x
+//          [0:Nlib] columns, whereas the actual library or prediction
+//          rows are not required to be in [0:Npred], [0:Nlib].
+//          Therefore, allDistances D(i,j) != D(j,i) unless lib = pred.
+//          Rather, actual rows are parameters.prediction[ predRow ],
+//          parameters.library[ libRow ] with predRow in [0:Npred]...
 //---------------------------------------------------------------------
 void EDM::Distances () {
 
@@ -320,7 +347,7 @@ void EDM::Distances () {
 
     max_it = std::max_element( parameters.library.begin(),
                                parameters.library.end() );
-    size_t  maxLibIndex = (size_t) *max_it;
+    size_t maxLibIndex = (size_t) *max_it;
 
     if ( maxPredIndex >= embedding.NRows() or
          maxLibIndex  >= embedding.NRows() ) {
@@ -358,13 +385,14 @@ void EDM::Distances () {
 
         for ( size_t libRow = 0; libRow < Nlib; libRow++ ) {
 
-            if ( predictionRow == parameters.library[ libRow ] ) {
+            size_t libraryRow = parameters.library[ libRow ];
+
+            if ( predictionRow == libraryRow ) {
                 continue;  // degenerate pred & lib
             }
 
             // Find distance between vector (v1) and library vector v2
-            std::valarray< double > v2 =
-                embedding.Row( parameters.library[ libRow ] );
+            std::valarray< double > v2 = embedding.Row( libraryRow );
 
             allDistances( predRow, libRow ) =
                 Distance( v1, v2, DistanceMetric::Euclidean );
