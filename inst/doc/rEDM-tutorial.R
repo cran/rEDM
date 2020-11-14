@@ -99,12 +99,12 @@ lines( Time, predictions $ Predictions, lwd = 2, col = 'red' )
 legend("topright", legend = c("observed", "predicted"),
 fill = c( 'blue', 'red' ), bty = "n", cex = 1.3 )
 
-plot( Time, coefficients $ C4, type = "l", col = "brown",
-ylab = "dV4/dV1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
-plot( Time, coefficients $ C3, type = "l", col = "darkgreen",
-ylab = "dV3/dV1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
-plot( Time, coefficients $ C2, type = "l", col = "blue",
-ylab = "dV2/dV1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+plot( Time, coefficients[, 6], type = "l", col = "brown",
+ylab = "∂V4/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+plot( Time, coefficients[, 5], type = "l", col = "darkgreen",
+ylab = "∂V3/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+plot( Time, coefficients[, 4], type = "l", col = "blue",
+ylab = "∂V2/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 
 ## ---- echo = FALSE------------------------------------------------------------
 par(mfrow = c(1, 1), mar = c(4, 4, 2, 1), mgp = c(2.5, 1, 0))

@@ -22,6 +22,7 @@ public: // No need for protected or private
 
     std::string lib_str;            // multi argument parameters for library
     std::string pred_str;           // multi argument parameters for prediction
+    bool        disjointLibrary;    // breaks in lib?
 
     std::vector<size_t> library;    // library row indices
     std::vector<size_t> prediction; // prediction row indices
@@ -51,6 +52,7 @@ public: // No need for protected or private
     int         multiviewEnsemble; // Number of ensembles in multiview
     int         multiviewD;        // Multiview state-space dimension
     bool        multiviewTrainLib; // Use prediction as training library
+    bool        multiviewExcludeTarget; // Exclude target from eval combos
 
     std::string libSizes_str;
     std::vector< size_t > librarySizes;// CCM library sizes to evaluate
@@ -60,7 +62,6 @@ public: // No need for protected or private
     unsigned    seed;             // CCM random selection RNG seed
     bool        includeData;      // CCM include all simplex projection results
 
-    bool        noNeighborLimit;  // Strictly forbid neighbors outside library
     bool        validated;
 
     Version version; // Version object, instantiated in constructor
@@ -95,17 +96,17 @@ public: // No need for protected or private
         std::string SmapOutputFile    = "",
         std::string blockOutputFile   = "",        
 
-        int         multiviewEnsemble = 0,
-        int         multiviewD        = 0,
-        bool        multiviewTrainLib = true,
+        int         multiviewEnsemble      = 0,
+        int         multiviewD             = 0,
+        bool        multiviewTrainLib      = true,
+        bool        multiviewExcludeTarget = false,
 
         std::string libSizes_str      = "",
         int         subSamples        = 0,
         bool        randomLib         = true,
         bool        replacement       = false,
         unsigned    seed              = 0,  // 0: Generate random seed in CCM
-        bool        includeData       = false,
-        bool        noNeighborLimit   = false
+        bool        includeData       = false
     );
 
     ~Parameters();
