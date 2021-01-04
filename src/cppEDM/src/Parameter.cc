@@ -86,7 +86,7 @@ Parameters::Parameters(
 
     // Set validated flag and instantiate Version
     validated        ( false ),
-    version          ( 1, 7, 1, "2020-11-29" )
+    version          ( 1, 7, 3, "2020-12-17" )
 {
     // Constructor code
     if ( method != Method::None ) {
@@ -105,246 +105,18 @@ Parameters::Parameters(
 Parameters::~Parameters() {}
 
 //----------------------------------------------------------------
-// Index offsets, generate library and prediction indices,
-// and parameter validation
+// Generate library and prediction indices.
+// Parameter validation and initialization.
 //----------------------------------------------------------------
 void Parameters::Validate() {
 
-    validated       = true;
-    disjointLibrary = false;
+    validated = true;
 
     if ( not embedded and tau == 0 ) {
         std::string errMsg( "Parameters::Validate(): "
                             "tau must be non-zero.\n" );
         throw std::runtime_error( errMsg );
     }
-
-    //--------------------------------------------------------------
-    // Generate library indices: Apply zero-offset
-    //--------------------------------------------------------------
-    if ( lib_str.size() ) {
-        // Parse lib_str into vector of strings
-        std::vector<std::string> lib_vec = SplitString( lib_str, " \t," );
-        if ( lib_vec.size() % 2 != 0 ) {
-            std::string errMsg( "Parameters::Validate(): "
-                                "library must be even number of integers.\n" );
-            throw std::runtime_error( errMsg );
-        }
-
-        // Generate libPairs vector of start, stop index pairs
-        std::vector< std::pair< size_t, size_t > > libPairs; // numeric bounds
-        for ( size_t i = 0; i < lib_vec.size(); i = i + 2 ) {
-            libPairs.emplace_back( std::make_pair( std::stoi( lib_vec[i] ),
-                                                   std::stoi( lib_vec[i+1] ) ) );
-        }
-        if ( libPairs.size() > 1 ) {
-            disjointLibrary = true;
-        }
-
-        size_t nLib = 0; // Count of lib items
-
-        // Get number of lib indices, validate end > start
-        for ( auto thisPair : libPairs ) {
-            size_t lib_start = thisPair.first;
-            size_t lib_end   = thisPair.second;
-
-            nLib += lib_end - lib_start + 1;
-
-            // Validate end > stop indices
-            if ( method == Method::Simplex or method == Method::SMap ) {
-                // Don't check if method == None, Embed or CCM since default
-                // of "1 1" is used.
-                if ( lib_start >= lib_end ) {
-                    std::stringstream errMsg;
-                    errMsg << "Parameters::Validate(): library start "
-                           << lib_start << " exceeds end " << lib_end << ".\n";
-                    throw std::runtime_error( errMsg.str() );
-                }
-            }
-            // Disallow indices < 0, the user may have specified 0 start
-            if ( lib_start < 1 or lib_end < 1 ) {
-                std::stringstream errMsg;
-                errMsg << "Parameters::Validate(): Library indices less than "
-                       << "1 not allowed.\n";
-                throw std::runtime_error( errMsg.str() );
-            }
-        }
-
-        // Create library vector of indices
-        library = std::vector< size_t >( nLib );
-        size_t i = 0;
-        for ( auto thisPair : libPairs ) {
-            for ( size_t li = thisPair.first; li <= thisPair.second; li++ ) {
-                library[ i ] = li - 1; // apply zero-offset
-                i++;
-            }
-        }
-
-        // If disjointLibrary create vector of disallowed library rows
-        if ( disjointLibrary ) {
-            int maxLibrary_i = (int) library.back();
-            int minLibrary_i = (int) library.front();
-            int allLibSize   = maxLibrary_i - minLibrary_i + 1;
-
-            // A "full" library with no missing values, for set difference
-            std::vector< size_t > allLibrary( allLibSize );
-
-            // Fill with indices 0, 1, ... allLibSize - 1
-            i = 0;
-            for ( int lib_i = minLibrary_i; lib_i <= maxLibrary_i; lib_i++ ) {
-                allLibrary[ i ] = lib_i;
-                i++;
-            }
-
-            // Find library rows that are "gaps", not in library
-            disjointLibraryRows = std::vector< size_t > ( allLibSize );
-            std::vector< size_t >::iterator li;
-            li = std::set_difference ( allLibrary.begin(), allLibrary.end(),
-                                       library.begin(),    library.end(),
-                                       disjointLibraryRows.begin());
-
-            disjointLibraryRows.resize( li - disjointLibraryRows.begin() );
-
-            // Add rows that span gaps by virture of embedding
-            int shift = tau * ( E - 1 ); // default tau = -1
-            std::vector< size_t > disjointLibraryRowsCopy( disjointLibraryRows );
-            
-            for ( auto disjointLibRow : disjointLibraryRowsCopy ) {
-                int thisRow = (int) disjointLibRow;
-                int newRow  = embedded ? thisRow : thisRow - shift;
-
-                if ( newRow > 0 ) {
-                    li = std::find( disjointLibraryRowsCopy.begin(),
-                                    disjointLibraryRowsCopy.end(), newRow );
-                    if ( li == disjointLibraryRowsCopy.end() ) {
-                        // newRow not in disjointLibraryRows
-                        disjointLibraryRows.push_back( (size_t) newRow );
-                    }
-                }
-            }
-
-            // Remove from library
-            std::vector< size_t >::iterator dli;
-            for ( dli  = disjointLibraryRows.begin();
-                  dli != disjointLibraryRows.end(); dli++ ) {
-                
-                li = std::find( library.begin(), library.end(), *dli );
-                if ( li != library.end() ) {
-                    library.erase( li );
-                }   
-            }
-        } // disjointLibrary
-
-        if ( method == Method::Simplex or
-             method == Method::SMap or method == Method::CCM ) {
-
-            // Validate lib: E, tau, Tp combination
-            int vectorStart  = std::max( (E - 1) * tau, 0 );
-            vectorStart      = std::max( vectorStart, Tp );
-            int vectorEnd    = std::min( (E - 1) * tau, Tp );
-            vectorEnd        = std::min( vectorEnd, 0 );
-            int vectorLength = std::abs( vectorStart - vectorEnd ) + 1;
-
-            int maxLibrarySegment = 0;
-            for ( auto thisPair : libPairs ) {
-                int libPairSpan = thisPair.second - thisPair.first + 1;
-                maxLibrarySegment = std::max( maxLibrarySegment, libPairSpan );
-            }
-
-            if ( vectorLength > maxLibrarySegment ) {
-                std::stringstream errMsg;
-                errMsg << "Parameters::Validate(): Combination of E = "
-                       << E << " Tp = " << Tp << " tau = " << tau
-                       << " is invalid.\n";
-                throw std::runtime_error( errMsg.str() );
-            }
-        }
-    }
-
-    //--------------------------------------------------------------
-    // Generate prediction indices: Apply zero-offset
-    //--------------------------------------------------------------
-    if ( pred_str.size() ) {
-        // Parse pred_str into vector of strings
-        std::vector<std::string> pred_vec = SplitString( pred_str, " \t," );
-        if ( pred_vec.size() % 2 != 0 ) {
-            std::string errMsg( "Parameters::Validate(): "
-                                "prediction must be even number of integers.\n");
-            throw std::runtime_error( errMsg );
-        }
-
-        // Generate vector of start, stop index pairs
-        std::vector< std::pair< size_t, size_t > > predPairs;
-        for ( size_t i = 0; i < pred_vec.size(); i = i + 2 ) {
-            predPairs.emplace_back( std::make_pair( std::stoi( pred_vec[i] ),
-                                                    std::stoi( pred_vec[i+1])));
-        }
-
-        size_t nPred = 0; // Count of pred items
-
-        // Get number of pred indices, validate end > start
-        for ( auto thisPair : predPairs ) {
-            size_t pred_start = thisPair.first;
-            size_t pred_end   = thisPair.second;
-
-            nPred += pred_end - pred_start + 1;
-
-            // Validate end > stop indices
-            if ( method == Method::Simplex or method == Method::SMap ) {
-                // Don't check if method == None, Embed or CCM since default
-                // of "1 1" is used.
-                if ( pred_start >= pred_end ) {
-                    std::stringstream errMsg;
-                    errMsg << "Parameters::Validate(): prediction start "
-                           << pred_start << " exceeds end " << pred_end << ".\n";
-                    throw std::runtime_error( errMsg.str() );
-                }
-            }
-            // Disallow indices < 0, the user may have specified 0 start
-            if ( pred_start < 1 or pred_end < 1 ) {
-                std::stringstream errMsg;
-                errMsg << "Parameters::Validate(): Prediction indices less than "
-                       << "1 not allowed.\n";
-                throw std::runtime_error( errMsg.str() );
-            }
-        }
-
-        // Create prediction vector of indices
-        prediction = std::vector< size_t >( nPred );
-        size_t i = 0;
-        for ( auto thisPair : predPairs ) {
-            for ( size_t li = thisPair.first; li <= thisPair.second; li++ ) {
-                prediction[ i ] = li - 1; // apply zero-offset
-                i++;
-            }
-        }
-    }
-
-    if ( method == Method::Simplex or method == Method::SMap ) {
-        if ( not library.size() ) {
-            std::string errMsg( "Parameters::Validate(): "
-                                "library indices not found.\n" );
-            throw std::runtime_error( errMsg );
-        }
-        if ( not prediction.size() ) {
-            std::string errMsg( "Parameters::Validate(): "
-                                "prediction indices not found.\n" );
-            throw std::runtime_error( errMsg );
-        }
-    }
-    else {
-        // Defaults if Method is None, Embed or CCM
-        if ( not library.size() ) {
-            library = std::vector<size_t>( 1, 0 );
-        }
-        if ( not prediction.size() ) {
-            prediction = std::vector<size_t>( 1, 0 );
-        }
-    }
-
-#ifdef DEBUG_ALL
-    PrintIndices( library, prediction );
-#endif
 
     //--------------------------------------------------------------
     // Convert multi argument parameters from string to vectors
@@ -414,6 +186,10 @@ void Parameters::Validate() {
 
     //--------------------------------------------------------------------
     // CCM librarySizes
+    //   1) 3 arguments : start stop increment
+    //      if increment < stop generate the library sequence.
+    //      if increment > stop presume list of 3 library sizes.
+    //   2) Otherwise: "x y ..." : list of library sizes.
     //--------------------------------------------------------------------
     if ( libSizes_str.size() > 0 ) {
         std::vector<std::string> libsize_vec = SplitString(libSizes_str," \t,");
@@ -430,9 +206,9 @@ void Parameters::Validate() {
             increment = std::stoi( libsize_vec[2] );
 
             // However, it might just be 3 library sizes...
-            // If increment < stop, then presume 3 sequence arguments
+            // If increment < stop, presume start : stop : increment
             if ( increment < stop ) {
-                libSizeSequence = true;
+                libSizeSequence = true; // Generate the library sizes
             }
         }
 
@@ -490,8 +266,8 @@ void Parameters::Validate() {
     }
 
     //--------------------------------------------------------------------
-    // Simplex: knn not specified: knn set to E+1
-    //    embedded true : E set to number columns
+    // Simplex: embedded true     : E set to number columns
+    //          knn not specified : knn set to E+1
     //--------------------------------------------------------------------
     if ( method == Method::Simplex or method == Method::CCM ) {
 
@@ -528,8 +304,9 @@ void Parameters::Validate() {
         }
     }
     //--------------------------------------------------------------------
-    // SMap and knn not specified: knn set to library.size()
+    // SMap
     // embedded true : E set to size( columns ) for output processing
+    // knn check deferred until after library is created
     //--------------------------------------------------------------------
     else if ( method == Method::SMap ) {
         if ( embedded and columnNames.size() > 1 ) {
@@ -539,22 +316,6 @@ void Parameters::Validate() {
             else if ( columnNames.size() ) {
                 E = columnNames.size();
             }
-        }
-
-        if ( knn == 0 ) { // default knn = 0, set knn value
-            knn = library.size() - E;
-
-            if ( verbose ) {
-                std::stringstream msg;
-                msg << "Parameters::Validate(): Set knn = " << knn
-                    << " for SMap. " << std::endl;
-                std::cout << msg.str();
-            }
-        }
-        if ( knn < 2 ) {
-            std::stringstream errMsg;
-            errMsg << "Parameters::Validate() S-Map knn must be at least 2.\n";
-            throw std::runtime_error( errMsg.str() );
         }
 
         if ( not embedded and columnNames.size() > 1 ) {
@@ -581,6 +342,261 @@ void Parameters::Validate() {
             throw std::runtime_error( errMsg.str() );
         }
     }
+
+    //--------------------------------------------------------------
+    // Generate library
+    //--------------------------------------------------------------
+    if ( lib_str.size() ) {
+        // Parse lib_str into vector of strings
+        std::vector<std::string> lib_vec = SplitString( lib_str, " \t," );
+        if ( lib_vec.size() % 2 != 0 ) {
+            std::string errMsg( "Parameters::Validate(): "
+                                "library must be even number of integers.\n" );
+            throw std::runtime_error( errMsg );
+        }
+
+        // Generate libPairs vector of start, stop index pairs
+        std::vector< std::pair< size_t, size_t > > libPairs; // numeric bounds
+        for ( size_t i = 0; i < lib_vec.size(); i = i + 2 ) {
+            libPairs.emplace_back( std::make_pair( std::stoi( lib_vec[i] ),
+                                                   std::stoi( lib_vec[i+1] ) ) );
+        }
+
+        // Validate end > start
+        for ( auto thisPair : libPairs ) {
+            size_t lib_start = thisPair.first;
+            size_t lib_end   = thisPair.second;
+
+            // Validate end > stop indices
+            if ( method == Method::Simplex or method == Method::SMap ) {
+                // Don't check if method == None, Embed or CCM since default
+                // of "1 1" is used.
+                if ( lib_start >= lib_end ) {
+                    std::stringstream errMsg;
+                    errMsg << "Parameters::Validate(): library start "
+                           << lib_start << " exceeds end " << lib_end << ".\n";
+                    throw std::runtime_error( errMsg.str() );
+                }
+            }
+            // Disallow indices < 0, the user may have specified 0 start
+            if ( lib_start < 1 or lib_end < 1 ) {
+                std::stringstream errMsg;
+                errMsg << "Parameters::Validate(): Library indices less than "
+                       << "1 not allowed.\n";
+                throw std::runtime_error( errMsg.str() );
+            }
+        }
+
+        // Create library of indices
+        library = std::vector< size_t >(); // Per thread
+
+        bool disjointLibrary = libPairs.size() > 1 ? true : false;
+
+        int shift = E > 2 ? E - 2 : 0; // embedding and 0-offset shift
+
+        if ( Tp >= 0 ) {
+            // Multiple lib segments if libPairs.size() > 1
+            for ( size_t i = 0; i < libPairs.size() - 1; i++ ) {
+                // Add rows for library segments, disallowing vectors
+                // in a disjointLibrary "gap" accomodating E and Tp
+                std::pair< size_t, size_t > pair = libPairs[ i ];
+
+                int stop = (int) pair.second - (E-1) - Tp + 1;
+                if ( not embedded ) { stop = stop + shift; } // embedding shift
+
+                for ( int j = pair.first; j <= stop; j++ ) {
+                    library.push_back( j - 1 ); // apply zero-offset
+                }
+            }
+
+            // The last (or only) library segment
+            std::pair< size_t, size_t > pair = libPairs.back();
+
+            int start = pair.first;
+            if ( not embedded and disjointLibrary ) {
+                start = start + 1 + shift; // add embedding shift
+            }
+
+            for ( size_t j = start; j <= pair.second; j++ ) {
+                library.push_back( j - 1 ); // apply zero-offset
+            }
+        }
+        else {  // Negative Tp
+            // Multiple lib segments if libPairs.size() > 1
+            for ( size_t i = 0; i < libPairs.size() - 1; i++ ) {
+                // Add rows for library segments, disallowing vectors
+                // in the "gap" accomodating E and Tp
+                std::pair< size_t, size_t > pair = libPairs[ i ];
+
+                int stop = (int) pair.second;
+
+                for ( int j = pair.first; j <= stop; j++ ) {
+                    library.push_back( j - 1 ); // apply zero-offset
+                }
+            }
+
+            // The last (or only) library segment
+            std::pair< size_t, size_t > pair = libPairs.back();
+
+            int start = pair.first + Tp;
+
+            if ( not embedded and disjointLibrary ) {
+                start = start + 1 + shift; // add embedding shift
+            }
+
+            for ( size_t j = start - Tp; j <= pair.second; j++ ) {
+                library.push_back( j - 1 ); // apply zero-offset
+            }
+        }
+
+        // Validate lib: E, tau, Tp combination
+        if ( method == Method::Simplex or
+             method == Method::SMap or method == Method::CCM ) {
+            int vectorStart  = std::max( (E - 1) * tau, 0 );
+            vectorStart      = std::max( vectorStart, Tp );
+            int vectorEnd    = std::min( (E - 1) * tau, Tp );
+            vectorEnd        = std::min( vectorEnd, 0 );
+            int vectorLength = std::abs( vectorStart - vectorEnd ) + 1;
+
+            int maxLibrarySegment = 0;
+            for ( auto thisPair : libPairs ) {
+                int libPairSpan = thisPair.second - thisPair.first + 1;
+                maxLibrarySegment = std::max( maxLibrarySegment, libPairSpan );
+            }
+
+            if ( vectorLength > maxLibrarySegment ) {
+                std::stringstream errMsg;
+                errMsg << "Parameters::Validate(): Combination of E = "
+                       << E << " Tp = " << Tp << " tau = " << tau
+                       << " is invalid.\n";
+                throw std::runtime_error( errMsg.str() );
+            }
+        }
+    }
+
+    //--------------------------------------------------------------
+    // Generate prediction
+    //--------------------------------------------------------------
+    if ( pred_str.size() ) {
+        // Parse pred_str into vector of strings
+        std::vector<std::string> pred_vec = SplitString( pred_str, " \t," );
+        if ( pred_vec.size() % 2 != 0 ) {
+            std::string errMsg( "Parameters::Validate(): "
+                                "prediction must be even number of integers.\n");
+            throw std::runtime_error( errMsg );
+        }
+
+        // Generate vector of start, stop index pairs
+        std::vector< std::pair< size_t, size_t > > predPairs;
+        for ( size_t i = 0; i < pred_vec.size(); i = i + 2 ) {
+            predPairs.emplace_back( std::make_pair( std::stoi( pred_vec[i] ),
+                                                    std::stoi( pred_vec[i+1])));
+        }
+
+        size_t nPred = 0; // Count of pred items
+
+        // Get number of pred indices, validate end > start
+        for ( auto thisPair : predPairs ) {
+            size_t pred_start = thisPair.first;
+            size_t pred_end   = thisPair.second;
+
+            nPred += pred_end - pred_start + 1;
+
+            // Validate end > stop indices
+            if ( method == Method::Simplex or method == Method::SMap ) {
+                // Don't check if method == None, Embed or CCM since default
+                // of "1 1" is used.
+                if ( pred_start >= pred_end ) {
+                    std::stringstream errMsg;
+                    errMsg << "Parameters::Validate(): prediction start "
+                           << pred_start << " exceeds end " << pred_end << ".\n";
+                    throw std::runtime_error( errMsg.str() );
+                }
+            }
+            // Disallow indices < 0, the user may have specified 0 start
+            if ( pred_start < 1 or pred_end < 1 ) {
+                std::stringstream errMsg;
+                errMsg << "Parameters::Validate(): Prediction indices less than "
+                       << "1 not allowed.\n";
+                throw std::runtime_error( errMsg.str() );
+            }
+        }
+
+        // Create prediction vector of indices
+        prediction = std::vector< size_t >( nPred );
+        size_t i = 0;
+        for ( auto thisPair : predPairs ) {
+            for ( size_t li = thisPair.first; li <= thisPair.second; li++ ) {
+                prediction[ i ] = li - 1; // apply zero-offset
+                i++;
+            }
+        }
+        // Require sequential ordering
+        for ( size_t i = 1; i < prediction.size(); i++ ) {
+            if ( prediction[ i ] <= prediction[ i - 1 ] ) {
+                std::stringstream errMsg;
+                errMsg << "Parameters::Validate(): Prediction indices are "
+                       << "not strictly increasing.\n";
+                throw std::runtime_error( errMsg.str() );
+            }
+        }
+        // Warn about disjoint prediction sets: not fully supported
+        if ( predPairs.size() > 1 ) {
+            std::stringstream msg;
+            msg << "WARNING: Validate(): Disjoint prediction sets "
+                << " are not fully supported. Use with caution." << std::endl;
+            std::cout << msg.str();
+        }
+    }
+
+    //--------------------------------------------------------------
+    // Validate library & prediction
+    // Set SMap knn default based on E and library size
+    //--------------------------------------------------------------
+    if ( method == Method::Simplex or method == Method::SMap ) {
+        if ( not library.size() ) {
+            std::string errMsg( "Parameters::Validate(): "
+                                "library indices not found.\n" );
+            throw std::runtime_error( errMsg );
+        }
+        if ( not prediction.size() ) {
+            std::string errMsg( "Parameters::Validate(): "
+                                "prediction indices not found.\n" );
+            throw std::runtime_error( errMsg );
+        }
+
+        if ( method == Method::SMap ) {
+            if ( knn == 0 ) { // default knn = 0, set knn value
+                knn = library.size();
+
+                if ( verbose ) {
+                    std::stringstream msg;
+                    msg << "Parameters::Validate(): Set knn = " << knn
+                        << " for SMap. " << std::endl;
+                    std::cout << msg.str();
+                }
+            }
+            if ( knn < 2 ) {
+                std::stringstream errMsg;
+                errMsg<<"Parameters::Validate() S-Map knn must be at least 2.\n";
+                throw std::runtime_error( errMsg.str() );
+            }
+        }
+    }
+    else {
+        // Defaults if Method is None, Embed or CCM
+        if ( not library.size() ) {
+            library = std::vector<size_t>( 1, 0 );
+        }
+        if ( not prediction.size() ) {
+            prediction = std::vector<size_t>( 1, 0 );
+        }
+    }
+
+#ifdef DEBUG_ALL
+    PrintIndices( library, prediction );
+#endif
+
 }
 
 //------------------------------------------------------------
@@ -624,17 +640,6 @@ void Parameters::DeleteLibPred() {
         }
     }
 
-    bool deleteDisjointLibIndex = false;
-    for ( auto element  = deleted_lib_elements.begin();
-               element != deleted_lib_elements.end(); element++ ) {
-        it = std::find( disjointLibraryRows.begin(),
-                        disjointLibraryRows.end(), *element );
-        if ( it != prediction.end() ) {
-            deleteDisjointLibIndex = true;
-            break;
-        }
-    }
-
     bool deletePredIndex = false;
     for ( auto element  = deleted_pred_elements.begin();
                element != deleted_pred_elements.end(); element++ ) {
@@ -644,21 +649,6 @@ void Parameters::DeleteLibPred() {
             break;
         }
     }
-
-#ifdef DEBUG_ALL
-    std::cout << "DeleteLibPred(): shift: " << shift
-              << " deleteLibIndex: " << deleteLibIndex
-              << " deletePredIndex: " << deletePredIndex << std::endl;
-    std::cout << " deleted_lib_elements: ";
-    for ( auto element  = deleted_lib_elements.begin();
-               element != deleted_lib_elements.end(); element++ ) {
-        std::cout << *element << ", ";
-    } std::cout << std::endl << " deleted_pred_elements: ";
-    for ( auto element  = deleted_pred_elements.begin();
-               element != deleted_pred_elements.end(); element++ ) {
-        std::cout << *element << ", ";
-    } std::cout << std::endl;
-#endif
 
     // Erase elements of row indices that were deleted
     if ( deleteLibIndex ) {
@@ -670,20 +660,6 @@ void Parameters::DeleteLibPred() {
             
             if ( it != library.end() ) {
                 library.erase( it );
-            }
-        }
-    }
-
-    if ( deleteDisjointLibIndex ) {
-        for ( auto element  = deleted_lib_elements.begin();
-                   element != deleted_lib_elements.end(); element++ ) {
-
-            std::vector< size_t >::iterator it;
-            it = std::find( disjointLibraryRows.begin(),
-                            disjointLibraryRows.end(), *element );
-            
-            if ( it != disjointLibraryRows.end() ) {
-                disjointLibraryRows.erase( it );
             }
         }
     }
@@ -709,10 +685,7 @@ void Parameters::DeleteLibPred() {
         for ( auto li = library.begin(); li != library.end(); li++ ) {
             *li = *li - shift;
         }
-        for ( auto li  = disjointLibraryRows.begin();
-                   li != disjointLibraryRows.end(); li++ ) {
-            *li = *li - shift;
-        }
+
         for ( auto pi = prediction.begin(); pi != prediction.end(); pi++ ) {
             *pi = *pi - shift;
         }
