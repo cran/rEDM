@@ -1,4 +1,4 @@
-d2255e0ebe18d058e51f65ef532e04cd *DESCRIPTION
+34d762a1fb4a9704d7c9ede95641ed6a *DESCRIPTION
 d5e0272bcd6a4e1cb025a326b8a2558e *LICENSE
 ba60eb160fee86565767803da429ab9b *NAMESPACE
 af2e2218d64cb12eaee0e36bef168f58 *NEWS
@@ -81,13 +81,13 @@ cde839781c1faf7a3ead43febb670e6d *src/cppEDM/src/Common.h
 168607f4f0877e13e40c0a9cff2e1043 *src/cppEDM/src/DateTime.h
 d47c685cd2ec8cbd37f9859ab8720c0b *src/cppEDM/src/EDM.cc
 035b1c889bc51dd0ed6ccd2261b00ab8 *src/cppEDM/src/EDM.h
-28e6a99b807632c7d9b0c33bddf05f78 *src/cppEDM/src/EDM_Formatting.cc
+39f5d65540ec0a93e65e884413d0e814 *src/cppEDM/src/EDM_Formatting.cc
 54fcae8d0c98ccb66c639c628120ec46 *src/cppEDM/src/EDM_Neighbors.cc
 3e777122842b367fc37b78503f6a245b *src/cppEDM/src/EDM_Neighbors.h
 9e2b18ef4732be6506014ee30440c513 *src/cppEDM/src/Eval.cc
 b58bd801925e00c598477ff24d882d42 *src/cppEDM/src/Multiview.cc
 29d93262129b1b0be610d779ea49039c *src/cppEDM/src/Multiview.h
-5455a138aaa062cbe1a6088a6123a9af *src/cppEDM/src/Parameter.cc
+d7962b5875650f7f532608b1cfd4a7e4 *src/cppEDM/src/Parameter.cc
 212b59570b9108faf934b0f026318091 *src/cppEDM/src/Parameter.h
 a450c3dcecfd95f2d026cd357fde6520 *src/cppEDM/src/SMap.cc
 3edf4cc6ecbcd9f1715b7f8cebcb3c1b *src/cppEDM/src/SMap.h
@@ -108,4 +108,4 @@ cf86c228622a392e08bd5765962859af *vignettes/References.bib
 e943a9ac2cb659c57662e8842827a636 *vignettes/rEDM-algorithms.ltx
 ab9ab2c5102d0a4233865c9032519fe4 *vignettes/rEDM-algorithms.pdf
 40184a4650c5313610b0a3d7df340aba *vignettes/rEDM-tutorial.Rmd
-08161bf01e9fa31666da3eecb5a58a50 *vignettes/rEDM-tutorial.html
+c6b180330cbc49a7f682cd4a96e22b98 *vignettes/rEDM-tutorial.html
