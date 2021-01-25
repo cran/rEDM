@@ -1,8 +1,8 @@
 Package: rEDM
 Type: Package
 Title: Empirical Dynamic Modeling ('EDM')
-Version: 1.7.4
-Date: 2021-01-09
+Version: 1.7.5
+Date: 2021-01-13
 Authors@R: c( person("Joseph", "Park", role = c("aut", "cre"),
                      email = "JosephPark@IEEE.org",
                      comment = c(ORCID = "0000-0001-5411-1409")),
@@ -29,7 +29,7 @@ LinkingTo: Rcpp, RcppThread
 Suggests: knitr, rmarkdown, formatR
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2021-01-09 13:20:06 UTC; jpark
+Packaged: 2021-01-24 13:48:41 UTC; jpark
 Author: Joseph Park [aut, cre] (<https://orcid.org/0000-0001-5411-1409>),
   Cameron Smith [aut],
   George Sugihara [aut, ccp] (<https://orcid.org/0000-0002-2863-6946>),
@@ -38,4 +38,4 @@ Author: Joseph Park [aut, cre] (<https://orcid.org/0000-0001-5411-1409>),
   Hao Ye [ctb] (<https://orcid.org/0000-0002-8630-1458>),
   The Regents of the University of California [cph]
 Repository: CRAN
-Date/Publication: 2021-01-11 15:10:05 UTC
+Date/Publication: 2021-01-25 12:50:02 UTC
