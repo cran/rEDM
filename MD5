@@ -1,4 +1,4 @@
-b2b4d66fcd10a2ed6dbeb35278389abe *DESCRIPTION
+35aa89744ad6ae69a940a89603a8b456 *DESCRIPTION
 bbae96e6ce7003ac836e0199db0854bd *LICENSE
 ba60eb160fee86565767803da429ab9b *NAMESPACE
 20ca2b826ffae70dfb991b9de79585dd *NEWS
@@ -8,7 +8,7 @@ afd5acc26db2aab864d12b847f9796f4 *R/Examples.R
 6a7b21b17a08cb7fe325e25bae3a1e06 *R/LegacyInterface.R
 80aff3f94b06a636235493473f8d1c8c *R/zzz.R
 df3d596ef5a838fb72f38a4503fceced *README.md
-6974b1ad74b3815d35211a39e57ae86a *build/vignette.rds
+dbe8df33d563bf7dc0c9991d2fd2b5ad *build/vignette.rds
 baf12ba201aa4c952bf86467a651f398 *data/EvergladesFlow.RData
 9d9964b25c63638decb9332b1bdc13c2 *data/Lorenz5D.RData
 bb66ab4f3adcfded3c846ff864a88a78 *data/TentMap.RData
@@ -70,9 +70,9 @@ a98fe0cab1b7f0bbe77c2a027194bd97 *src/RcppExports.cpp
 eba3387e94ea1cb951012e212219eb78 *src/SMap.cpp
 cb808c5130af083ecf085c9a6697d48c *src/Simplex.cpp
 1cbc0564e29e20a0fbd77fd62e14df46 *src/cppEDM/lib/ignore.h
-a06d6c00aab2be8aa6976e4f1cb39577 *src/cppEDM/src/API.cc
+abb8409d59f01c3e61021fdd40148339 *src/cppEDM/src/API.cc
 25124b89305814ba3fe89b39ac4cce65 *src/cppEDM/src/API.h
-2c4c225851835222fe9e5a822f2cc8d7 *src/cppEDM/src/CCM.cc
+4589026a1bc11ab8b8b5441cc75d8cd8 *src/cppEDM/src/CCM.cc
 e6ae447a09510a5e635251b358bf91e3 *src/cppEDM/src/CCM.h
 4fca76cea3c0b284e2a93decb536fffb *src/cppEDM/src/Common.cc
 cde839781c1faf7a3ead43febb670e6d *src/cppEDM/src/Common.h
@@ -80,14 +80,14 @@ cde839781c1faf7a3ead43febb670e6d *src/cppEDM/src/Common.h
 7c7210cc9b24a648e7d1eba71a626d9b *src/cppEDM/src/DateTime.cc
 168607f4f0877e13e40c0a9cff2e1043 *src/cppEDM/src/DateTime.h
 f20051cb0dc1d93eaad6f6720eb68280 *src/cppEDM/src/EDM.cc
-035b1c889bc51dd0ed6ccd2261b00ab8 *src/cppEDM/src/EDM.h
+22f7813c7ca81c099f58da569eb28df8 *src/cppEDM/src/EDM.h
 fa5c1996631bd6bb51e7d78b4a11d905 *src/cppEDM/src/EDM_Formatting.cc
 80d995865441896b9e4019fcf09d1207 *src/cppEDM/src/EDM_Neighbors.cc
 3e777122842b367fc37b78503f6a245b *src/cppEDM/src/EDM_Neighbors.h
 5176e77524758783b4ee7539714cf8f1 *src/cppEDM/src/Eval.cc
 d05583be9cbf525e4eb3dbf695ec2ff9 *src/cppEDM/src/Multiview.cc
 29d93262129b1b0be610d779ea49039c *src/cppEDM/src/Multiview.h
-e2977f34319551f425d273df1df20dcc *src/cppEDM/src/Parameter.cc
+cd9ac1c0d89abd1237ba37f24e016c09 *src/cppEDM/src/Parameter.cc
 1b13de742360e7695cbca1ab9e2f688b *src/cppEDM/src/Parameter.h
 a450c3dcecfd95f2d026cd357fde6520 *src/cppEDM/src/SMap.cc
 3edf4cc6ecbcd9f1715b7f8cebcb3c1b *src/cppEDM/src/SMap.h
@@ -108,4 +108,4 @@ cf86c228622a392e08bd5765962859af *vignettes/References.bib
 e943a9ac2cb659c57662e8842827a636 *vignettes/rEDM-algorithms.ltx
 ab9ab2c5102d0a4233865c9032519fe4 *vignettes/rEDM-algorithms.pdf
 40184a4650c5313610b0a3d7df340aba *vignettes/rEDM-tutorial.Rmd
-b18fccb4e049cc32542f6fc79607f22b *vignettes/rEDM-tutorial.html
+f9f7daed4898bf66143e232ef45a2ef9 *vignettes/rEDM-tutorial.html
