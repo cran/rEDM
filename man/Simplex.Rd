@@ -5,7 +5,8 @@
 Simplex(pathIn = "./", dataFile = "", dataFrame = NULL, pathOut = "./", 
   predictFile = "", lib = "", pred = "", E = 0, Tp = 1, knn = 0, tau = -1, 
   exclusionRadius = 0, columns = "", target = "", embedded = FALSE,
-  verbose = FALSE, const_pred = FALSE, showPlot = FALSE)
+  verbose = FALSE, const_pred = FALSE, validLib = vector(),
+  showPlot = FALSE)
 }
 \arguments{
 \item{pathIn}{path to \code{dataFile}.}
@@ -49,6 +50,10 @@ input data used to create the library.}
 
 \item{const_pred}{logical to add a \emph{constant predictor} column to the
 output. The constant predictor is X(t+1) = X(t).}
+
+\item{validLib}{logical vector the same length as the number of data
+ rows.  Any data row represented in this vector as FALSE, will not be
+ included in the library.}
 
 \item{showPlot}{logical to plot results.}
 }

@@ -6,7 +6,7 @@ SMap(pathIn = "./", dataFile = "", dataFrame = NULL, pathOut = "./",
   predictFile = "", lib = "", pred = "", E = 0, Tp = 1, knn = 0, tau = -1, 
   theta = 0, exclusionRadius = 0, columns = "", target = "", smapFile = "", 
   jacobians = "", embedded = FALSE, const_pred = FALSE, verbose = FALSE,
-  showPlot = FALSE)  
+  validLib = vector(), showPlot = FALSE)  
 }
 \arguments{
 \item{pathIn}{path to \code{dataFile}.}
@@ -57,6 +57,10 @@ input data used to create the library.}
 output. The constant predictor is X(t+1) = X(t).}
 
 \item{verbose}{logical to produce additional console reporting.}
+
+\item{validLib}{logical vector the same length as the number of data
+ rows. Any data row represented in this vector as FALSE, will not be
+ included in the library.}
 
 \item{showPlot}{logical to plot results.}
 }
