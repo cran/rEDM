@@ -2,7 +2,7 @@
 #include "RcppEDMCommon.h"
 
 //----------------------------------------------------------------
-// 
+//
 //----------------------------------------------------------------
 r::List ParamMaptoList( std::map< std::string, std::string > m ) {
 
@@ -29,7 +29,7 @@ r::List ParamMaptoList( std::map< std::string, std::string > m ) {
                   pi->first == "multiviewEnsemble" or
                   pi->first == "multiviewD"        or
                   pi->first == "generateSteps" ) {
-            
+
             L[ pi->first ] = std::stoi( pi->second );
         }
         // boolean types
@@ -42,7 +42,7 @@ r::List ParamMaptoList( std::map< std::string, std::string > m ) {
                   pi->first == "const_predict" or
                   pi->first == "parameterList" or
                   pi->first == "verbose" ) {
-            
+
             if ( pi->second == "0" ) {
                 L[ pi->first ] = false;
             }
