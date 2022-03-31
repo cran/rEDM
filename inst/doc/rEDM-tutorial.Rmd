@@ -8,22 +8,27 @@ author:
 - Cameron Smith
 - Hao Ye
 date: "`r Sys.Date()`"
-output: rmarkdown::html_vignette
+output: html_document
+#output:
+#  pdf_document:
+#    latex_engine: xelatex
+#  html_document:
+#    rmarkdown::html_vignette
 vignette: >
     %\VignetteEngine{knitr::rmarkdown}
     %\VignetteIndexEntry{"Empirical Dynamic Modeling"}
     %\VignetteEncoding{UTF-8}
 bibliography: References.bib
 header-includes: 
-- \usepackage[utf8]{inputenc}
 - \usepackage{graphicx}
 - \usepackage{float}
+- \usepackage[utf8]{inputenc}
 ---
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, tidy = TRUE,
                       fig.pos = 'h', fig.align = 'center',
-                      fig.width = 4, fig.height = 3.3)
+                      fig.width = 4, fig.height = 3.3 )
 knitr::opts_knit$set(global.par = TRUE, progress = FALSE)
 options(digits = 2)
 par.orig = par()
@@ -46,7 +51,7 @@ The **rEDM** package can be obtained in two main ways. The standard version of t
 install.packages("rEDM")
 ```
 
-The development version is available on GitHub at [SugiharaLab](github.com/SugiharaLab/rEDM), and can be installed using R **devtools**.
+Also available on GitHub at [SugiharaLab](https://github.com/SugiharaLab/rEDM), and can be installed using R **devtools**.
 
 ```{r GitHub installation instructions, eval = FALSE}
 devtools::install_github("SugiharaLab/rEDM")
@@ -75,7 +80,7 @@ Consequently, it is possible to project the system state onto one of the coordin
 <!------------
    Figure 1 
 ------------->
-```{r, LorenzProjection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor.", out.width = 250, fig.align = 'center'}
+```{r, LorenzProjection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor.", out.width = "50%", fig.align = 'center'}
 knitr::include_graphics("Lorenz_Projection.png")
 ```
 
@@ -92,7 +97,7 @@ $$ \vec{x}_t = \langle x_t, x_{t-\tau}, \dots, x_{t-(E-1)\tau} \rangle $$
 <!------------
    Figure 2
 ------------->
-```{r fig_attractor_reconstruction, echo = FALSE, fig.cap = "Attractor Reconstruction from 3 Lagged Coordinates", out.width = 250, fig.align = 'center'}
+```{r fig_attractor_reconstruction, echo = FALSE, fig.cap = "Attractor Reconstruction from 3 Lagged Coordinates", out.width = "50%", fig.align = 'center'}
 knitr::include_graphics("Lorenz_Reconstruct.png")
 ```
 
@@ -335,7 +340,7 @@ par(mfrow = c(4, 1), mar = c(2, 4, 0.5, 1), oma = c(0, 0, 0, 0),
     mgp = c(2.1, 1, 0) )
 ```
 
-```{r smap_Lorenz_plot, out.width = 300, fig.cap = "S-map prediction and coefficients of Lorenz'96 5-D system."}
+```{r smap_Lorenz_plot, out.width = "70%", fig.cap = "S-map prediction and coefficients of Lorenz'96 5-D system."}
 predictions = smap_Lorenz $ predictions
 coefficients = smap_Lorenz $ coefficients
 Time = predictions $ Time
@@ -347,11 +352,14 @@ legend("topright", legend = c("observed", "predicted"),
 fill = c( 'blue', 'red' ), bty = "n", cex = 1.3 )
 
 plot( Time, coefficients[, 6], type = "l", col = "brown",
-ylab = "∂V4/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+ylab = paste( "\U2202", "V4/", "\U2202", "V1" , sep = '' ), 
+xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 plot( Time, coefficients[, 5], type = "l", col = "darkgreen",
-ylab = "∂V3/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+ylab = paste( "\U2202", "V3/", "\U2202", "V1" , sep = '' ),
+xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 plot( Time, coefficients[, 4], type = "l", col = "blue",
-ylab = "∂V2/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+ylab = paste( "\U2202", "V2/", "\U2202", "V1" , sep = '' ),
+xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 ```
 
 ```{r, echo = FALSE}
@@ -624,7 +632,7 @@ par( par.orig )
 <!------------------------------------------------------------------------->
 # Package Core
 <!------------------------------------------------------------------------->
-The **rEDM** package is implemented as a wrapper to the [`cppEDM`](github.com/SugiharaLab/cppEDM) library. All EDM algorithms are executed in the core `cppEDM` library and interfaced through the [`Rcpp`](cran.r-project.org/web/packages/Rcpp/index.html) package. 
+The **rEDM** package is implemented as a wrapper to the [`cppEDM`](https://github.com/SugiharaLab/cppEDM) library. All EDM algorithms are executed in the core `cppEDM` library and interfaced through the [`Rcpp`](https://cran.r-project.org/package=Rcpp) package.
 
 <!------------------------------------------------------------------------->
 ## Data Input
@@ -639,7 +647,7 @@ Data can be input as an R `data.frame`, or read from a `.csv` file. In either ca
 <!------------------------------------------------------------------------->
 # Parameters
 <!------------------------------------------------------------------------->
-Since **rEDM** is a wrapper for the [`cppEDM`](github.com/SugiharaLab/cppEDM) library, parameters largely correspond to function parameters of [`cppEDM`](github.com/SugiharaLab/cppEDM).  Primary parameters are tabulated here.
+Since **rEDM** is a wrapper for the [`cppEDM`](https://github.com/SugiharaLab/cppEDM) library, parameters largely correspond to function parameters of [`cppEDM`](https://github.com/SugiharaLab/cppEDM).  Primary parameters are tabulated here.
 
 ```{r parameter-table, echo = FALSE}
 paramTable = read.csv( "ParameterTable.csv", as.is = TRUE )

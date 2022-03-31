@@ -1,7 +1,7 @@
 ## ----setup, include = FALSE---------------------------------------------------
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, tidy = TRUE,
                       fig.pos = 'h', fig.align = 'center',
-                      fig.width = 4, fig.height = 3.3)
+                      fig.width = 4, fig.height = 3.3 )
 knitr::opts_knit$set(global.par = TRUE, progress = FALSE)
 options(digits = 2)
 par.orig = par()
@@ -13,10 +13,10 @@ par(mar = c(4, 4, 2, 1), mgp = c(2.5, 1, 0))
 ## ----GitHub installation instructions, eval = FALSE---------------------------
 #  devtools::install_github("SugiharaLab/rEDM")
 
-## ---- LorenzProjection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor.", out.width = 250, fig.align = 'center'----
+## ---- LorenzProjection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor.", out.width = "50%", fig.align = 'center'----
 knitr::include_graphics("Lorenz_Projection.png")
 
-## ----fig_attractor_reconstruction, echo = FALSE, fig.cap = "Attractor Reconstruction from 3 Lagged Coordinates", out.width = 250, fig.align = 'center'----
+## ----fig_attractor_reconstruction, echo = FALSE, fig.cap = "Attractor Reconstruction from 3 Lagged Coordinates", out.width = "50%", fig.align = 'center'----
 knitr::include_graphics("Lorenz_Reconstruct.png")
 
 ## ----load package-------------------------------------------------------------
@@ -88,7 +88,7 @@ head( cbind( smap_Lorenz $ predictions, smap_Lorenz $ coefficients[,2:6] ), 3 )
 par(mfrow = c(4, 1), mar = c(2, 4, 0.5, 1), oma = c(0, 0, 0, 0),
     mgp = c(2.1, 1, 0) )
 
-## ----smap_Lorenz_plot, out.width = 300, fig.cap = "S-map prediction and coefficients of Lorenz'96 5-D system."----
+## ----smap_Lorenz_plot, out.width = "70%", fig.cap = "S-map prediction and coefficients of Lorenz'96 5-D system."----
 predictions = smap_Lorenz $ predictions
 coefficients = smap_Lorenz $ coefficients
 Time = predictions $ Time
@@ -100,11 +100,14 @@ legend("topright", legend = c("observed", "predicted"),
 fill = c( 'blue', 'red' ), bty = "n", cex = 1.3 )
 
 plot( Time, coefficients[, 6], type = "l", col = "brown",
-ylab = "∂V4/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+ylab = paste( "\U2202", "V4/", "\U2202", "V1" , sep = '' ), 
+xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 plot( Time, coefficients[, 5], type = "l", col = "darkgreen",
-ylab = "∂V3/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+ylab = paste( "\U2202", "V3/", "\U2202", "V1" , sep = '' ),
+xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 plot( Time, coefficients[, 4], type = "l", col = "blue",
-ylab = "∂V2/∂V1", xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
+ylab = paste( "\U2202", "V2/", "\U2202", "V1" , sep = '' ),
+xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 
 ## ---- echo = FALSE------------------------------------------------------------
 par(mfrow = c(1, 1), mar = c(4, 4, 2, 1), mgp = c(2.5, 1, 0))
