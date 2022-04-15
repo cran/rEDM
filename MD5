@@ -1,7 +1,7 @@
-fb894f8fca2bb8c4d11f2bcea809400c *DESCRIPTION
+a688e904891ba84b72f889b4762f9871 *DESCRIPTION
 bbae96e6ce7003ac836e0199db0854bd *LICENSE
 652cfff6e82b0c8b58ee62294cdca9d6 *NAMESPACE
-667c4760950e1d863378b4e8f0e50c16 *NEWS.md
+f44e29cd38924ce1167dd546e85890c8 *NEWS.md
 084a430ad9ec0e0b06a20583638faa5f *R/EDM.R
 e2f99955a5d9083f6d48664ab93c8b4d *R/EDM_AuxFuncs.R
 afd5acc26db2aab864d12b847f9796f4 *R/Examples.R
@@ -71,13 +71,13 @@ a98fe0cab1b7f0bbe77c2a027194bd97 *src/RcppExports.cpp
 b0cf970b347f590b389f5871193846fc *src/SMap.cpp
 a734efe95d9f9639fb2de005a05a5e68 *src/Simplex.cpp
 1cbc0564e29e20a0fbd77fd62e14df46 *src/cppEDM/lib/ignore.h
-907182c04aac15a32669991b0e51bde0 *src/cppEDM/src/API.cc
+2644a8a3dde902703c8b1555f8815594 *src/cppEDM/src/API.cc
 1e38cd70aa3e338bf04eddbffe08a49a *src/cppEDM/src/API.h
 82771faeba1c7710ec78aeb2c2060679 *src/cppEDM/src/CCM.cc
 e6ae447a09510a5e635251b358bf91e3 *src/cppEDM/src/CCM.h
 db6d1df147d221d2afb0dd5300878f7c *src/cppEDM/src/Common.cc
 4d3c9d55ef7535ef827b9b612ff2cbc6 *src/cppEDM/src/Common.h
-75c46c2e7be7c6be0ec2c9a9abf08460 *src/cppEDM/src/DataFrame.h
+786b2a7494eec82c5411d0afa0ac44d8 *src/cppEDM/src/DataFrame.h
 7c7210cc9b24a648e7d1eba71a626d9b *src/cppEDM/src/DateTime.cc
 168607f4f0877e13e40c0a9cff2e1043 *src/cppEDM/src/DateTime.h
 f8190647b713c586640d9fb4345b267a *src/cppEDM/src/EDM.cc
@@ -88,7 +88,7 @@ eb51ab59067bf509692bcca9bdeb459d *src/cppEDM/src/EDM_Formatting.cc
 5784d33a659cf6807fed2ecd1e8f95cb *src/cppEDM/src/Eval.cc
 d05583be9cbf525e4eb3dbf695ec2ff9 *src/cppEDM/src/Multiview.cc
 0f355cc0c2ecde9f918daa8c2a66c60f *src/cppEDM/src/Multiview.h
-e3f3ae16614767f08bb8ed28313cc5cd *src/cppEDM/src/Parameter.cc
+76639b665b6b486a30de25f183b8b40e *src/cppEDM/src/Parameter.cc
 86773d065b722089504d6e34beef6095 *src/cppEDM/src/Parameter.h
 4489008b2671922b6508a310581713dd *src/cppEDM/src/SMap.cc
 9ac3988acfe3131f63d60fa58af50696 *src/cppEDM/src/SMap.h
@@ -109,4 +109,4 @@ cf86c228622a392e08bd5765962859af *vignettes/References.bib
 e943a9ac2cb659c57662e8842827a636 *vignettes/rEDM-algorithms.ltx
 ab9ab2c5102d0a4233865c9032519fe4 *vignettes/rEDM-algorithms.pdf
 12c8db74231778d0422327c36ee8d9fb *vignettes/rEDM-tutorial.Rmd
-3d6ed65add4684eaa579bc4ab0f08555 *vignettes/rEDM-tutorial.html
+287fc4338e18a7b1bb5e95290561ddd1 *vignettes/rEDM-tutorial.html
