@@ -1,8 +1,8 @@
-9e2fba08cae824c10c4dac070e41ea20 *DESCRIPTION
+a2afcce74013f3bafa657adda4a6a363 *DESCRIPTION
 bbae96e6ce7003ac836e0199db0854bd *LICENSE
 89ea8d67ac2be7158d512c257712b79d *NAMESPACE
-63ed4a14d0bfb349cfc53b032cee0e0e *NEWS.md
-05ee50ff04b20e23c958037920fba773 *R/EDM.R
+ca347d699f424697c65cbe4e2ef1f782 *NEWS.md
+90c3583289a75129250a37ac7d732695 *R/EDM.R
 e2f99955a5d9083f6d48664ab93c8b4d *R/EDM_AuxFuncs.R
 a61a142658aa2215a9dba919ae516c04 *R/Examples.R
 98db2a416ffbb17a7f7d9894381171ef *R/LegacyInterface.R
@@ -30,7 +30,7 @@ f6c546ff2cbfa60b0d74eeb4f09c396c *man/EDM.Rd
 ff36cc810c6ec02a90f0521a07198e3e *man/EvergladesFlow.Rd
 3e2c9f2ef335396aae1fc330f1d8c9b5 *man/Lorenz5D.Rd
 0f4e606023f91060acc90175c7f5b081 *man/MakeBlock.Rd
-8010918cd6f34595048132bf7bd7ea9a *man/Multiview.Rd
+880acbc223dad84e6f87be242e948cf5 *man/Multiview.Rd
 3e8d269b26f6a600df50522639ac8d15 *man/PredictInterval.Rd
 7353561dba079acec64f1ac604c0d320 *man/PredictNonlinear.Rd
 cb8b76d31326c64a4ec9545b1e2bf654 *man/SMap.Rd
@@ -61,7 +61,7 @@ de06f83efec1731f243bc251fc2df1c9 *src/DataFrame.cpp
 a02eccb740a8983b75dced278ef37890 *src/EmbedDim.cpp
 3053f58a699a74397fab8abfe172ee60 *src/Makevars
 0d4aa3b8df261d16207558fbb3df9493 *src/Makevars.win
-05adf4f2cb7fe72b2914491a96ecee0a *src/Multiview.cpp
+567fb4da5ad029588b1204bbf4d32206 *src/Multiview.cpp
 e9a7d53d30e36ba00a40ea254c827737 *src/ParameterList.cpp
 34f70af42ab431890463475576793f36 *src/PredictInterval.cpp
 22cbdd4fd57c9a763bc32276d41f4352 *src/PredictNL.cpp
@@ -76,7 +76,7 @@ a734efe95d9f9639fb2de005a05a5e68 *src/Simplex.cpp
 82771faeba1c7710ec78aeb2c2060679 *src/cppEDM/src/CCM.cc
 e6ae447a09510a5e635251b358bf91e3 *src/cppEDM/src/CCM.h
 db6d1df147d221d2afb0dd5300878f7c *src/cppEDM/src/Common.cc
-4d3c9d55ef7535ef827b9b612ff2cbc6 *src/cppEDM/src/Common.h
+a9ab6e69602206c3076e4af8d0804c40 *src/cppEDM/src/Common.h
 786b2a7494eec82c5411d0afa0ac44d8 *src/cppEDM/src/DataFrame.h
 7c7210cc9b24a648e7d1eba71a626d9b *src/cppEDM/src/DateTime.cc
 168607f4f0877e13e40c0a9cff2e1043 *src/cppEDM/src/DateTime.h
@@ -86,11 +86,11 @@ eb51ab59067bf509692bcca9bdeb459d *src/cppEDM/src/EDM_Formatting.cc
 11d5ba6d5e03f662ce6ddac5a389a753 *src/cppEDM/src/EDM_Neighbors.cc
 3e777122842b367fc37b78503f6a245b *src/cppEDM/src/EDM_Neighbors.h
 53e697da0612edf2141cea6489070cdc *src/cppEDM/src/Eval.cc
-d05583be9cbf525e4eb3dbf695ec2ff9 *src/cppEDM/src/Multiview.cc
+c5c2e4bae373a2ad1dea944f6fbae812 *src/cppEDM/src/Multiview.cc
 0f355cc0c2ecde9f918daa8c2a66c60f *src/cppEDM/src/Multiview.h
-a8ea866641e4e34ade4dc41dbb9b371a *src/cppEDM/src/Parameter.cc
+1e3b6ff8e0aed5ee5f2269531398e6bf *src/cppEDM/src/Parameter.cc
 86773d065b722089504d6e34beef6095 *src/cppEDM/src/Parameter.h
-4489008b2671922b6508a310581713dd *src/cppEDM/src/SMap.cc
+7efaa3d3b99beee504df7430f6bac6c8 *src/cppEDM/src/SMap.cc
 9ac3988acfe3131f63d60fa58af50696 *src/cppEDM/src/SMap.h
 99e9331b0f0b63a23da9408d33575dfe *src/cppEDM/src/Simplex.cc
 1a116b33a33d7da4e221acd7c2eb9783 *src/cppEDM/src/Simplex.h
@@ -109,4 +109,4 @@ cf86c228622a392e08bd5765962859af *vignettes/References.bib
 e943a9ac2cb659c57662e8842827a636 *vignettes/rEDM-algorithms.ltx
 ab9ab2c5102d0a4233865c9032519fe4 *vignettes/rEDM-algorithms.pdf
 12c8db74231778d0422327c36ee8d9fb *vignettes/rEDM-tutorial.Rmd
-25d5b0b9dc8f8ac1aa2e6215c635105f *vignettes/rEDM-tutorial.html
+02c277f04a7be899b8eef4aac0d49928 *vignettes/rEDM-tutorial.html
