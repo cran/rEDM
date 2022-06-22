@@ -1,6 +1,6 @@
 #### rEDM NEWS
 
-2022-05-25 version 1.12.2 <JosephPark@IEEE.org>
+2022-06-17 version 1.13.0 <JosephPark@IEEE.org>
 
 ---
 
@@ -11,9 +11,15 @@
 
 ---
 
+##### Version 1.13
+- Adds `embedded` and multivariate embedding to `CCM()`.
+- Parameters `pathOut`, `predictFile` are removed from `CCM` to accomodate the Rcpp 20 parameter limit.
+
 ##### Version 1.12
 - Adds `exclusionRadius` and `validLib` to `EmbedDimension()`, `PredictInterval()` and `PredictNonlinear()`. 
 - Version 1.12.2 Multiview return data.frame, correct SMap coefficient labels. 
+- Version 1.12.2.1 Rcpp character encoding workaround on Windows for DataFrame column names.
+- Version 1.12.3 cppEDM DateTime regex removed to avoid UTF-8 gcc issue in Windows.
 
 ##### Version 1.11
 - Removes `nan` from `SMap` `columns` and `target`. Warning generated.

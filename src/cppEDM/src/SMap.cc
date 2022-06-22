@@ -85,7 +85,7 @@ void SMapClass::SMap ( Solver solver ) {
         // vector B (target BC's) for this row (observation).
         int    libRow;
         size_t libRowBase;
-        int    targetLibRowOffset = parameters.Tp - embedShift;
+        int    targetLibRowOffset = parameters.Tp;
 
         for ( size_t k = 0; k < knn; k++ ) {
             libRowBase = knn_neighbors( row, k );
@@ -230,7 +230,7 @@ void SMapClass::Generate( Solver solver ) {
     // At each iteration, the prediction is added to a new DataFrame
     // that replaces the SMapClass::data object for the next Project()
     std::valarray< double >
-        valarrayData = data.VectorColumnName( parameters.targetName );
+        valarrayData = data.VectorColumnName( parameters.targetNames.front() );
 
     std::vector< double > columnData;
     columnData.assign( std::begin( valarrayData ), std::end( valarrayData ) );
@@ -352,22 +352,21 @@ void SMapClass::WriteOutput () {
 
     // coefficients column names
     std::vector<std::string> coefNames;
-    if ( parameters.columnNames.size() and parameters.targetName.size() ) {
+    if ( parameters.columnNames.size() and parameters.targetNames.size() ) {
         coefNames.push_back( "C0" );
 
-        if ( parameters.embedded ) {
-            for ( auto colName : parameters.columnNames ) {
-                std::stringstream coefName;
-                coefName << "∂" << parameters.targetName << "/∂" << colName;
-                coefNames.push_back( coefName.str() );
-            }
-        }
-        else {
-            for ( auto colName : embedding.ColumnNames() ) {
-                std::stringstream coefName;
-                coefName << "∂" << parameters.targetName << "/∂" << colName;
-                coefNames.push_back( coefName.str() );
-            }
+        // Use parameters.columnNames  if embedded = true,
+        //     embedding.ColumnNames() if embedded = false
+        const std::vector< std::string > & columnNames = 
+            parameters.embedded ? std::ref( parameters.columnNames  ) :
+                                  std::ref( embedding.ColumnNames() );
+
+        for ( auto colName : columnNames ) {
+            std::stringstream coefName;
+            //coefName << u8"∂" << parameters.targetNames.front() << u8"/∂" << colName;
+            coefName << "\u2202"  << parameters.targetNames.front()
+                     << "/\u2202" << colName;
+            coefNames.push_back( coefName.str() );
         }
     }
     else {

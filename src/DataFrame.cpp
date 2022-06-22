@@ -27,7 +27,7 @@ DataFrame< double > DFToDataFrame ( Rcpp::DataFrame df ) {
 
     // Create cpp DataFrame
     DataFrame< double > dataFrame ( numRows, df.ncol()-1, colNames ); 
-    
+
     // Setup time column and time name for dataframe
     // It is assumed that the first column is a time vector !!!
     r::CharacterVector tmp = r::as<r::CharacterVector>( df[0] );
@@ -44,7 +44,7 @@ DataFrame< double > DFToDataFrame ( Rcpp::DataFrame df ) {
         std::valarray<double> col ( tmp.data(), tmp.size() );
         dataFrame.WriteColumn( idx-1, col ); 
     }
-    
+
     return dataFrame;
 }
 
@@ -52,23 +52,26 @@ DataFrame< double > DFToDataFrame ( Rcpp::DataFrame df ) {
 // Convert cppEDM DataFrame<double> to R DataFrame
 //---------------------------------------------------------------
 r::DataFrame DataFrameToDF ( DataFrame< double > dataFrame ) {
-    
+
     r::List columnList; // List of columns to create new R data.frame
 
     // NOTE: cppEDM DataFrame columnNames are data only, not time
     std::vector<std::string> columnNamesIn = dataFrame.ColumnNames();
+
     std::vector<std::string> columnNames;
+
     bool hasTime = false;
 
     // If dataFrame has time vector and timeName, add to columnList
     if ( dataFrame.Time().size() ) {
         hasTime = true; // Skip time column in dataFrame.VectorColumnName()
+
         columnNames.push_back( dataFrame.TimeName() );
 
         // Probe dataFrame.Time() to see if we can convert it to
         // a numeric, Date, or Datetime...
         std::string firstTime = dataFrame.Time()[0];
-        
+
         // Is firstTime purely numeric characters (not Date or DateTime)?
         // We presume time is not negative, or exponential 
         bool numericTime = strspn( firstTime.c_str(),
@@ -94,7 +97,7 @@ r::DataFrame DataFrameToDF ( DataFrame< double > dataFrame ) {
             }
             columnList.push_back( timeVec );
         }
-        
+
         if ( not numericTime and dateTime and not dateTimeTime ) {
             // Convert to Date
             r::DateVector dateVec( dataFrame.Time().size() );
@@ -105,11 +108,11 @@ r::DataFrame DataFrameToDF ( DataFrame< double > dataFrame ) {
             }
             columnList.push_back( dateVec );
         }
-        
+
         if ( not numericTime and not dateTime and dateTimeTime )  {
             // Convert to Datetime
             r::DatetimeVector datetimeVec( dataFrame.Time().size() );
-            
+
             for ( size_t i = 0; i < dataFrame.Time().size(); i++ ) {
                 datetimeVec[ i ] = r::Datetime( dataFrame.Time().at( i ),
                                                 "%Y-%m-%d %H:%M:%OS" );
@@ -137,10 +140,10 @@ r::DataFrame DataFrameToDF ( DataFrame< double > dataFrame ) {
         columnList.push_back( col_vec );
         columnNames.push_back( *ci );
     }
-    
+
     r::DataFrame df ( columnList );
     df.attr("names") = columnNames;
-        
+
     return df;
 }
 

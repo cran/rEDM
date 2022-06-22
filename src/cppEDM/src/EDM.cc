@@ -10,8 +10,7 @@ extern DataFrame< double > MakeBlock( DataFrame< double > &, int, int,
 //----------------------------------------------------------------
 EDM::EDM ( DataFrame< double > & data,
            Parameters          & parameters ) :
-    data( data ), anyTies( false ), embedShift( 0 ),
-    parameters( parameters ) {}
+    data( data ), anyTies( false ), parameters( parameters ) {}
 
 //----------------------------------------------------------------
 // Project : Implemented in sub-class
@@ -27,8 +26,8 @@ void EDM::Generate () {}
 // Set target (library) vector
 //----------------------------------------------------------------
 void EDM::GetTarget() {
-    if ( parameters.targetName.size() ) {
-        target = data.VectorColumnName( parameters.targetName );
+    if ( parameters.targetNames.size() ) {
+        target = data.VectorColumnName( parameters.targetNames.front() );
     }
     else {
         // Default to first column
