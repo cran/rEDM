@@ -5,24 +5,26 @@
 Simplex(pathIn = "./", dataFile = "", dataFrame = NULL, pathOut = "./", 
   predictFile = "", lib = "", pred = "", E = 0, Tp = 1, knn = 0, tau = -1, 
   exclusionRadius = 0, columns = "", target = "", embedded = FALSE,
-  const_pred = FALSE, verbose = FALSE, validLib = vector(),
-  generateSteps = 0, parameterList = FALSE, showPlot = FALSE)
+  verbose = FALSE, validLib = vector(), generateSteps = 0,
+  parameterList = FALSE, showPlot = FALSE, noTime = FALSE)
 }
 \arguments{
 \item{pathIn}{path to \code{dataFile}.}
 
 \item{dataFile}{.csv format data file name. The first column must be a time
-index or time values. The first row must be column names.}
+index or time values unless noTime is TRUE. The first row must be column names.}
 
 \item{dataFrame}{input data.frame. The first column must be a time
-index or time values. The columns must be named.}
+index or time values unless noTime is TRUE. The columns must be named.}
 
 \item{pathOut}{path for \code{predictFile} containing output predictions.}
 
 \item{predictFile}{output file name.}
 
-\item{lib}{string with start and stop indices of input data rows used to
-create the library of observations. A single contiguous range is supported.}
+\item{lib}{string or vector with start and stop indices of input data
+rows used to create the library from observations. Mulitple row index
+pairs can be specified with each pair defining the first and last
+rows of time series observation segments used to create the library.}
 
 \item{pred}{string with start and stop indices of input data rows used for
 predictions. A single contiguous range is supported.}
@@ -48,9 +50,6 @@ input data used to create the library.}
 
 \item{verbose}{logical to produce additional console reporting.}
 
-\item{const_pred}{logical to add a \emph{constant predictor} column to the
-output. The constant predictor is X(t+1) = X(t).}
-
 \item{validLib}{logical vector the same length as the number of data
  rows.  Any data row represented in this vector as FALSE, will not be
  included in the library.}
@@ -60,11 +59,12 @@ output. The constant predictor is X(t+1) = X(t).}
 \item{parameterList}{logical to add list of invoked parameters.}
 
 \item{showPlot}{logical to plot results.}
+
+\item{noTime}{logical to allow input data with no time column.}
 }
 
 \value{
-A data.frame with columns \code{Observations, Predictions}.  If
-\code{const_pred} is TRUE the column \code{Const_Predictions} is added.
+A data.frame with columns \code{Observations, Predictions}.
 The first column contains the time values.
 
 If \code{parameterList = TRUE}, a named list with "predictions" holding the
@@ -97,7 +97,7 @@ described in \cite{Sugihara and May}.
 }
 \examples{
 data( block_3sp )
-smplx <- Simplex( dataFrame = block_3sp, lib = "1 100", pred = "101 190",
+smplx = Simplex( dataFrame = block_3sp, lib = "1 100", pred = "101 190",
 E = 3, columns = "x_t", target = "x_t" )
 ComputeError( smplx $ Predictions, smplx $ Observations )
 }

@@ -13,7 +13,7 @@ par(mar = c(4, 4, 2, 1), mgp = c(2.5, 1, 0))
 ## ----GitHub installation instructions, eval = FALSE---------------------------
 #  devtools::install_github("SugiharaLab/rEDM")
 
-## ---- LorenzProjection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor.", out.width = "50%", fig.align = 'center'----
+## ----LorenzProjection, echo = FALSE, fig.cap = "Time Series Projection from the Lorenz Attractor.", out.width = "50%", fig.align = 'center'----
 knitr::include_graphics("Lorenz_Projection.png")
 
 ## ----fig_attractor_reconstruction, echo = FALSE, fig.cap = "Attractor Reconstruction from 3 Lagged Coordinates", out.width = "50%", fig.align = 'center'----
@@ -84,7 +84,7 @@ options(digits=4)
 ## ----S-map_Lorenz_results, warning = FALSE------------------------------------
 head( cbind( smap_Lorenz $ predictions, smap_Lorenz $ coefficients[,2:6] ), 3 )
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 par(mfrow = c(4, 1), mar = c(2, 4, 0.5, 1), oma = c(0, 0, 0, 0),
     mgp = c(2.1, 1, 0) )
 
@@ -109,7 +109,7 @@ plot( Time, coefficients[, 4], type = "l", col = "blue",
 ylab = paste( "\U2202", "V2/", "\U2202", "V1" , sep = '' ),
 xlab = "", lwd = 2, cex.lab = 1.3, cex.axis = 1.3 )
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 par(mfrow = c(1, 1), mar = c(4, 4, 2, 1), mgp = c(2.5, 1, 0))
 
 ## ----multiview----------------------------------------------------------------
@@ -136,7 +136,7 @@ plot(time_dec, Thrips $ Rain_mm, type = "l", lwd = 2, col = "blue", ylab = "Rain
 plot(time_dec, Thrips $ Season, type = "l", lwd = 2, col = "magenta", ylab = "Season", xlab = "" )
 mtext("Year", side = 1, outer = TRUE, line = 1)
 
-## ---- echo = FALSE------------------------------------------------------------
+## ----echo = FALSE-------------------------------------------------------------
 par(mfrow = c(1, 1), mar = c(4, 4, 2, 1), mgp = c(2.5, 1, 0))
 
 ## ----univariate thrips, fig.cap = "Simplex embedding dimension for Thrips abundance.", fig.width = 4, fig.height = 3.----
@@ -186,20 +186,42 @@ corr_matrix
 ## ----thrips setup, echo = FALSE-----------------------------------------------
 par( mfrow = c( 1, 3 ), mar = c( 3.5, 1.3, 2.3, 0.2 ), mgp = c(1.5, 0.5, 0) )
 
+CCMPlot = function( ccm.df, E, ylim = c( 0.2, 1 ) ) {
+    libSize = ccm.df $ LibSize
+    V1      = names( ccm.df )[2]
+    V2      = names( ccm.df )[3]
+
+    title = paste( V1, " : ", V2, "\nE=" , E )
+    
+    print( title )
+    print( libSize )
+
+    plot( libSize, ccm.df[ , V1 ],
+          ylim = ylim, main = title, col = "blue", type = "l", lwd = 3,
+          xlab = 'Library Size', ylab = 'Prediction Skill (\U03C1)' )
+    lines( libSize, ccm.df[ , V2 ], col = "red", lwd = 3 )
+    abline( h = 0 )
+    legend( 'topright', c( V1, V2 ), 
+            fill = c( 'blue', 'red' ), bty = 'n', cex = 1.2 )
+}
+
 ## ----ccm thrips, fig.cap = "Thrips cross mapped to climatic variables. Vertical axis is cross map prediction skill (rho).", fig.width = 7.5----
 thrips_xmap_maxT <- CCM(dataFrame = Thrips, E = E, Tp = 0,
                         columns = "Thrips_imaginis", target = "maxT_degC",
-                        libSizes = "13 73 3", sample = 300, showPlot = TRUE)
+                        libSizes = "13 73 3", sample = 300, showPlot = FALSE)
+CCMPlot( thrips_xmap_maxT, E )
 abline(h = corr_matrix['Thrips_imaginis', 'maxT_degC'], col = "black", lty = 2)
 
-thrips_xmap_maxT <- CCM(dataFrame = Thrips, E = E, Tp = 0,
+thrips_xmap_Rain <- CCM(dataFrame = Thrips, E = E, Tp = 0,
                         columns = "Thrips_imaginis", target = "Rain_mm",
-                        libSizes = "13 73 3", sample = 300, showPlot = TRUE)
+                        libSizes = "13 73 3", sample = 300, showPlot = FALSE)
+CCMPlot( thrips_xmap_Rain, E )
 abline(h = corr_matrix['Thrips_imaginis', 'Rain_mm'], col = "black", lty = 2)
 
-thrips_xmap_maxT <- CCM(dataFrame = Thrips, E = E, Tp = 0,
-                        columns = "Thrips_imaginis", target = "Season",
-                        libSizes = "13 73 3", sample = 300, showPlot = TRUE)
+thrips_xmap_Season <- CCM(dataFrame = Thrips, E = E, Tp = 0,
+                          columns = "Thrips_imaginis", target = "Season",
+                          libSizes = "13 73 3", sample = 300, showPlot = FALSE)
+CCMPlot( thrips_xmap_Season, E )
 abline(h = corr_matrix['Thrips_imaginis', 'Season'], col = "black", lty = 2)
 
 ## ----thrips setdown, echo = FALSE---------------------------------------------

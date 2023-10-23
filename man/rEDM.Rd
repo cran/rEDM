@@ -1,15 +1,15 @@
 \docType{package}
-\name{EDM}
+\name{rEDM}
 \alias{EDM}
-\alias{EDM-package}
+\alias{rEDM-package}
 \title{Empirical dynamic modeling}
 \description{
-  \pkg{EDM} provides tools for data-driven time series analyses. It is
-  based on reconstructing multivariate state (or phase) space
+  \pkg{rEDM} provides tools for data-driven time series analyses. It is
+  based on reconstructing multivariate state space
   representations from uni or multivariate time series, then projecting
   state changes using various metrics applied to nearest neighbors.
-
-  \pkg{EDM} is a \pkg{Rcpp} interface to the
+  
+  \pkg{rEDM} is a \pkg{Rcpp} interface to the
   \href{https://github.com/SugiharaLab/cppEDM}{cppEDM} library of
   Empirical Dynamic Modeling tools. Functionality includes:
   \itemize{
@@ -59,7 +59,7 @@
   }
 }
 \author{
-\strong{Maintainer}: Joseph Park & Cameron Smith
+\strong{Maintainer}: Joseph Park
 
 \strong{Authors}: Joseph Park, Cameron Smith, Ethan Deyle, Erik
 Saberski, George Sugihara

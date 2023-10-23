@@ -5,18 +5,18 @@
 CCM(pathIn = "./", dataFile = "", dataFrame = NULL,
   E = 0, Tp = 0, knn = 0, tau = -1,
   exclusionRadius = 0, columns = "", target = "", libSizes = "",
-  sample = 0, random = TRUE, replacement = FALSE, seed = 0, 
+  sample = 0, random = TRUE, seed = 0, 
   embedded = FALSE, includeData = FALSE, parameterList = FALSE,
-  verbose = FALSE, showPlot = FALSE)  
+  verbose = FALSE, showPlot = FALSE, noTime = FALSE)
 }
 \arguments{
 \item{pathIn}{path to \code{dataFile}.}
 
 \item{dataFile}{.csv format data file name. The first column must be a time
-index or time values. The first row must be column names.}
+index or time values unless noTime is TRUE. The first row must be column names.}
 
 \item{dataFrame}{input data.frame. The first column must be a time
-index or time values. The columns must be named.}
+index or time values unless noTime is TRUE. The columns must be named.}
 
 \item{E}{embedding dimension.}
 
@@ -37,7 +37,8 @@ input data used to create the library.}
 
 \item{libSizes}{string of 3 whitespace separated integer values
   specifying the intial library size, the final library size,
-  and the library size increment.}
+  and the library size increment. Can also be a list of strictly
+  increasing library sizes.}
 
 \item{sample}{integer specifying the number of random samples to draw at
 each library size evaluation.}
@@ -45,9 +46,6 @@ each library size evaluation.}
 \item{random}{logical to specify random (\code{TRUE}) or sequential
   library sampling. Note \code{random = FALSE} is not convergent
   cross mapping.}
-
-\item{replacement}{logical to specify sampling with replacement.
-  Note \code{replacement = TRUE} is not convergent cross mapping.}
 
 \item{seed}{integer specifying the random sampler seed.  If
   \code{seed=0} then a random seed is generated.}
@@ -62,6 +60,8 @@ each library size evaluation.}
 \item{verbose}{logical to produce additional console reporting.}
 
 \item{showPlot}{logical to plot results.}
+
+\item{noTime}{logical to allow input data with no time column.}
 }
 
 \value{
